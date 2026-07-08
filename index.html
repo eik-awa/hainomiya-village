@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>サグリ検索</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1615601076718034"
+     crossorigin="anonymous"></script>
 <style>
 :root{
   --paper:#F7F5F0; --ink:#23211C; --ink-soft:#6B675C;
@@ -569,7 +571,11 @@ document.addEventListener("click",e=>{
 });
 
 /* gates delegation */
-document.addEventListener("click",e=>{
+async function sha256hex(s){
+  const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-gate]");
   if(!b) return;
   const g=b.dataset.gate;
@@ -579,7 +585,8 @@ document.addEventListener("click",e=>{
   const val=norm(input.value);
   const G=GATES[g];
   if(!G) return;
-  if(G.answers.map(norm).includes(val)){
+  const hash=await sha256hex(val);
+  if(G.hashes.includes(hash)){
     flag(G.flag);
     toast(G.toast||"解錠しました");
     if(G.gives) G.gives.forEach(addKw);
@@ -592,10 +599,10 @@ document.addEventListener("click",e=>{
 });
 
 const GATES={
-  pass28:{answers:["曼珠沙華","マンジュシャゲ","まんじゅしゃげ","manjushage","manjusyage"],flag:"g_manju",reopen:"p28",toast:"パスワードが一致しました",wrongMsg:"パスワードが違います。兄が好きだった赤い花の「別名」……。"},
-  butsumetsu:{answers:["仏滅","ぶつめつ","ブツメツ"],flag:"g_butsu",reopen:"p32",toast:"合言葉が確認されました",wrongMsg:"合言葉が違います。六曜(ろくよう)で調べてみてください。"},
-  kaere:{answers:["カエレ","かえれ","帰れ","kaere","KAERE"],flag:"g_kaere",reopen:"p43",toast:"信号を解読しました",gives:["最後の入口"],wrongMsg:"解読できません。国際モールス信号の一覧表と照らし合わせてください。"},
-  yourname:{answers:[],flag:"",reopen:""}
+  pass28:{hashes:["113217a469d0aa8c4aee153b333e324b40635bd8af0bc3b8f8d303588b770cac","6242c14d53ac8804e2c914940164ab275449ca36d8010f11b0ae910deec197a1","62418ad34ace6a809ac42118f23897ec35eb6305a01b63f211f0ca9322bd4fbb","4671fbe87e2df70e134171293be43d1ce37b4b0452de550cda1ca8699eab40cc"],flag:"g_manju",reopen:"p28",toast:"パスワードが一致しました",wrongMsg:"パスワードが違います。兄が好きだった赤い花の「別名」……。"},
+  butsumetsu:{hashes:["b241c4199dbcfb87ce28f2e4346caa6d16501a7cbbfcd7a85f0f7ccd79d49225","671ea930b6d8fec665815075d5a43f342b6a720405cc734d9f0c495aabeda1be"],flag:"g_butsu",reopen:"p32",toast:"合言葉が確認されました",wrongMsg:"合言葉が違います。六曜(ろくよう)で調べてみてください。"},
+  kaere:{hashes:["15178542eb6563becf8c6ee43e7dc6152e493f696c770fc000fd4ae5394f4ccb","c36b1de332dad20faa6419b014aeb7247a27cc6a291f480286b2488647dbea7b","6dd81e27ecf471d9190397d5861aada577c8752d801381a71edce8bc250373ba"],flag:"g_kaere",reopen:"p43",toast:"信号を解読しました",gives:["最後の入口"],wrongMsg:"解読できません。国際モールス信号の一覧表と照らし合わせてください。"},
+  yourname:{hashes:[],flag:"",reopen:""}
 };
 
 /* ---------- landing ---------- */
