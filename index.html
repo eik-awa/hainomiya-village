@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サグリ検索</title>
+<style>
+:root{
+  --paper:#F7F5F0; --ink:#23211C; --ink-soft:#6B675C;
+  --link:#1F5AA8; --visited:#7A4FA0; --url:#0E7A3D;
+  --line:#DCD8CC; --card:#FFFFFF;
+  --shu:#A3352C; --shu-soft:#C4746D;
+  --serif:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","MS PMincho",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  --mono:"Menlo","Osaka-Mono","MS Gothic",monospace;
+}
+body[data-phase="dusk"]{
+  --paper:#EFECE3; --ink:#2A2620; --line:#CFC9B8;
+}
+body[data-phase="deep"], body[data-phase="abyss"]{
+  --paper:#0B0C0E; --ink:#C7C2B4; --ink-soft:#7C7668;
+  --link:#7FA6CF; --visited:#9C86BD; --url:#5E9C77;
+  --line:#26282C; --card:#121316; --shu:#B0342A;
+}
+body[data-phase="dawn"]{ --paper:#FBFAF4; --line:#E4E0D2; }
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.9;
+  min-height:100vh; transition:background .8s ease, color .8s ease;
+}
+body[data-phase="abyss"]{overflow-x:hidden}
+::selection{background:#2b2b2b;color:#e8e2d2}
+a,.q{color:var(--link);text-decoration:underline;cursor:pointer}
+.q:hover{color:var(--shu)}
+
+/* ===== engine chrome ===== */
+#chrome{
+  position:sticky;top:0;z-index:40;background:var(--paper);
+  border-bottom:1px solid var(--line);
+  padding:14px 18px 12px; transition:background .8s ease;
+}
+#chrome-inner{max-width:820px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#logo{
+  font-family:var(--serif);font-size:26px;letter-spacing:.14em;font-weight:600;
+  cursor:pointer;user-select:none;white-space:nowrap;position:relative;
+}
+#logo b{color:var(--shu);font-weight:600}
+#logo small{font-size:11px;letter-spacing:.3em;color:var(--ink-soft);display:block;margin-top:-4px;font-family:var(--sans)}
+body[data-haunt="1"] #logo b{animation:flick 7s infinite steps(1)}
+@keyframes flick{0%,92%{opacity:1}93%,95%{opacity:.15}96%,100%{opacity:1}}
+#searchform{flex:1;min-width:230px;display:flex;gap:0}
+#qbox{
+  flex:1;border:1px solid var(--line);border-right:none;background:var(--card);
+  color:var(--ink);padding:9px 14px;font-size:15px;border-radius:3px 0 0 3px;outline:none;
+  font-family:var(--sans);
+}
+#qbox:focus{border-color:var(--ink-soft)}
+#qbtn{
+  border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+  padding:9px 20px;font-size:14px;cursor:pointer;border-radius:0 3px 3px 0;letter-spacing:.15em;
+}
+#qbtn:hover{background:var(--shu);border-color:var(--shu)}
+#hud{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-soft)}
+#pagecount{font-family:var(--mono);letter-spacing:.05em}
+#notebtn{
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+  padding:6px 14px;border-radius:3px;cursor:pointer;font-size:13px;
+}
+#notebtn:hover{border-color:var(--shu);color:var(--shu)}
+#notebtn.pulse{animation:pulse 1.6s ease infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(163,53,44,0)}50%{box-shadow:0 0 0 5px rgba(163,53,44,.18)}}
+
+/* ===== main ===== */
+#main{max-width:820px;margin:0 auto;padding:26px 18px 90px}
+
+/* SERP */
+.serp-meta{font-size:12px;color:var(--ink-soft);margin-bottom:20px;border-bottom:1px dotted var(--line);padding-bottom:8px}
+.hit{margin-bottom:26px}
+.hit .t{font-size:17px;line-height:1.5}
+.hit .u{font-size:12px;color:var(--url);font-family:var(--mono);margin:2px 0}
+.hit .s{font-size:13.5px;color:var(--ink-soft)}
+.hit .s em{font-style:normal;background:rgba(163,53,44,.12);padding:0 2px}
+.hit .badge{font-size:10px;border:1px solid var(--line);color:var(--ink-soft);padding:1px 6px;border-radius:2px;margin-left:6px;vertical-align:2px}
+.noresult{padding:60px 0;text-align:center;color:var(--ink-soft)}
+.noresult .zero{font-family:var(--serif);font-size:22px;margin-bottom:14px;letter-spacing:.2em}
+
+/* landing */
+#landing{padding:60px 0 20px;text-align:center}
+#landing .biglogo{font-family:var(--serif);font-size:52px;letter-spacing:.18em;margin-bottom:4px}
+#landing .biglogo b{color:var(--shu)}
+#landing .tag{font-size:12px;letter-spacing:.4em;color:var(--ink-soft);margin-bottom:44px}
+.mailcard{
+  max-width:560px;margin:0 auto;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:4px;padding:26px 28px;
+  box-shadow:0 6px 24px rgba(30,25,15,.06);
+}
+.mailcard .from{font-size:12px;color:var(--ink-soft);font-family:var(--mono);border-bottom:1px dotted var(--line);padding-bottom:10px;margin-bottom:14px}
+.mailcard p{margin-bottom:12px;font-size:14px}
+
+/* ===== page frame (fake browser card) ===== */
+.pageframe{background:var(--card);border:1px solid var(--line);border-radius:5px;overflow:hidden;box-shadow:0 8px 30px rgba(25,20,10,.07)}
+.urlbar{
+  display:flex;align-items:center;gap:10px;background:var(--paper);
+  border-bottom:1px solid var(--line);padding:8px 14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);
+}
+.urlbar .dots i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--line);margin-right:5px}
+.urlbar .addr{flex:1;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:3px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pagebody{padding:30px 34px 40px}
+.backrow{margin-top:18px;font-size:13px;display:flex;justify-content:space-between;color:var(--ink-soft)}
+.pagenum{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+
+/* found toast */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,80px);
+  background:var(--ink);color:var(--paper);padding:10px 22px;border-radius:30px;
+  font-size:13px;letter-spacing:.1em;opacity:0;transition:all .45s cubic-bezier(.2,.9,.3,1.2);z-index:80;
+  pointer-events:none;white-space:nowrap;
+}
+#toast.on{transform:translate(-50%,0);opacity:1}
+
+/* ===== page skins ===== */
+.skin-blog h1{font-size:22px;line-height:1.5;margin-bottom:4px}
+.skin-blog .blogmeta{font-size:12px;color:var(--ink-soft);margin-bottom:20px}
+.skin-blog .banner{background:linear-gradient(135deg,#3d3a46,#191921);color:#eee;padding:14px 18px;font-family:var(--serif);letter-spacing:.2em;margin-bottom:22px;border-radius:3px;font-size:15px}
+.skin-blog h2{font-size:16px;border-left:4px solid var(--shu);padding-left:10px;margin:26px 0 10px}
+.skin-blog .quote{background:var(--paper);border:1px dashed var(--line);padding:12px 16px;font-size:13.5px;margin:12px 0;border-radius:3px}
+.skin-blog p{margin-bottom:12px}
+
+.skin-bbs{font-family:var(--mono);font-size:13px}
+.skin-bbs h1{font-size:15px;background:#8B0000;color:#fff;padding:6px 12px;margin-bottom:14px;font-weight:normal}
+body[data-phase="deep"] .skin-bbs h1,body[data-phase="abyss"] .skin-bbs h1{background:#4a1210}
+.res{border-bottom:1px dotted var(--line);padding:10px 4px}
+.res .rh{color:var(--url);font-size:12px;margin-bottom:2px}
+.res .rh .nm{color:#0a6e0a;font-weight:bold}
+.res .rb{white-space:pre-wrap;line-height:1.75}
+.res.warn .rb{color:var(--shu)}
+
+.skin-news{font-family:var(--serif)}
+.skin-news .paper-h{border-bottom:3px double var(--ink);padding-bottom:8px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:baseline}
+.skin-news .paper-h .np{font-size:20px;letter-spacing:.3em;font-weight:bold}
+.skin-news .paper-h .dt{font-size:12px}
+.skin-news h1{font-size:24px;line-height:1.55;margin-bottom:14px}
+.skin-news p{margin-bottom:12px;text-align:justify}
+.skin-news .cap{font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:6px;margin-top:16px}
+
+.skin-wiki h1{font-family:var(--serif);font-size:24px;border-bottom:2px solid var(--line);padding-bottom:6px;margin-bottom:14px;font-weight:normal}
+.skin-wiki .infobox{float:right;width:200px;border:1px solid var(--line);background:var(--paper);font-size:12px;padding:10px 12px;margin:0 0 14px 18px}
+.skin-wiki .infobox b{display:block;text-align:center;border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:6px}
+.skin-wiki .infobox dt{color:var(--ink-soft);float:left;clear:left;width:64px}
+.skin-wiki .infobox dd{margin-left:70px}
+.skin-wiki h2{font-size:17px;border-bottom:1px solid var(--line);margin:22px 0 8px;font-weight:600}
+.skin-wiki p{margin-bottom:10px}
+.skin-wiki .note{font-size:12px;color:var(--ink-soft)}
+
+.skin-2000s{text-align:center;background:
+  repeating-linear-gradient(0deg,transparent 0 22px, rgba(120,110,90,.05) 22px 23px)}
+.skin-2000s .site-t{font-family:var(--serif);font-size:26px;letter-spacing:.2em;color:#2a5c2a;text-shadow:1px 1px 0 #cfc}
+body[data-phase="deep"] .skin-2000s .site-t{color:#7fae7f;text-shadow:none}
+.skin-2000s .counter{font-family:var(--mono);background:#000;color:#3f3;display:inline-block;padding:2px 8px;font-size:12px;letter-spacing:2px;margin:8px 0}
+.skin-2000s hr{border:none;border-top:3px double var(--line);margin:14px auto;width:80%}
+.skin-2000s .body-l{max-width:560px;margin:0 auto;text-align:left}
+.skin-2000s p{margin-bottom:12px}
+.skin-2000s .photo{border:6px solid #fff;outline:1px solid var(--line);box-shadow:0 4px 10px rgba(0,0,0,.15);margin:12px auto;max-width:420px}
+
+.skin-uni h1{font-size:20px;border-left:6px solid #1c3f6e;padding-left:12px;margin-bottom:16px}
+body[data-phase="deep"] .skin-uni h1{border-color:#4d6d94}
+.skin-uni h2{font-size:15px;margin:20px 0 8px;color:var(--ink-soft)}
+.skin-uni li{margin-left:20px;margin-bottom:6px;font-size:14px}
+.skin-uni .abst{background:var(--paper);border:1px solid var(--line);padding:14px 18px;font-size:13.5px;margin:10px 0}
+
+.skin-gov{font-size:13.5px}
+.skin-gov h1{font-size:18px;background:var(--paper);border:1px solid var(--line);padding:8px 14px;margin-bottom:16px;font-weight:600}
+.skin-gov table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0}
+.skin-gov th,.skin-gov td{border:1px solid var(--line);padding:5px 10px;text-align:left}
+.skin-gov th{background:var(--paper);font-weight:600}
+.skin-gov .stamp{color:var(--shu);border:2px solid var(--shu);display:inline-block;padding:2px 10px;border-radius:3px;transform:rotate(-4deg);font-family:var(--serif);font-size:13px}
+
+.skin-dark{font-family:var(--serif);letter-spacing:.06em}
+.skin-dark h1{font-size:22px;color:var(--shu);margin-bottom:18px;font-weight:normal;letter-spacing:.25em}
+.skin-dark p{margin-bottom:14px}
+.pagebody.skin-dark{background:#0d0e10;color:#bdb7a6}
+.pagebody.skin-dark .q{color:#c98a83}
+
+.skin-broken{font-family:var(--mono);font-size:13px}
+.skin-broken p{margin-bottom:10px}
+.glitchtx{animation:gsk 3.5s infinite steps(1)}
+@keyframes gsk{0%,88%{transform:none;opacity:1}89%{transform:translateX(2px);opacity:.7}91%{transform:translateX(-2px)}93%,100%{transform:none;opacity:1}}
+.corrupt{color:var(--shu-soft);text-shadow:0 0 6px rgba(163,53,44,.4)}
+
+/* hidden ink: revealed by selection or 目を凝らす */
+.hidden-ink{color:transparent;transition:color 1.2s ease}
+.hidden-ink::selection{background:#111;color:#d8d2c0}
+body.strain .hidden-ink{color:var(--shu-soft)}
+
+/* gates */
+.gatebox{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:16px 18px;margin:18px 0}
+.gatebox .gl{font-size:12px;color:var(--ink-soft);letter-spacing:.15em;margin-bottom:8px}
+.gatebox .grow{display:flex;gap:8px}
+.gatebox input{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px;border-radius:3px;font-size:14px;outline:none}
+.gatebox button{border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:8px 18px;border-radius:3px;cursor:pointer}
+.gatebox button:hover{background:var(--shu);border-color:var(--shu)}
+.gatebox .wrong{color:var(--shu);font-size:12px;margin-top:8px;min-height:1em}
+.unlocked-block{border-left:3px solid var(--shu);padding:4px 0 4px 16px;margin:16px 0;animation:fadein 1.2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* notebook drawer */
+#shade{position:fixed;inset:0;background:rgba(10,8,5,.45);opacity:0;pointer-events:none;transition:opacity .3s;z-index:90}
+#shade.on{opacity:1;pointer-events:auto}
+#note{
+  position:fixed;top:0;right:0;height:100%;width:min(400px,92vw);z-index:95;
+  background:var(--card);border-left:1px solid var(--line);
+  transform:translateX(102%);transition:transform .35s cubic-bezier(.2,.8,.25,1);
+  overflow-y:auto;padding:22px 22px 40px;
+}
+#note.on{transform:none}
+#note h3{font-family:var(--serif);letter-spacing:.25em;font-size:16px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px}
+#note h4{font-size:12px;letter-spacing:.2em;color:var(--ink-soft);margin:20px 0 8px}
+.goalbox{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:12px 14px;font-size:13.5px}
+.goalbox .gt{font-weight:600;margin-bottom:4px}
+details.hint{margin-top:8px;font-size:13px}
+details.hint summary{cursor:pointer;color:var(--link);font-size:12.5px;user-select:none}
+details.hint div{background:var(--paper);border:1px dashed var(--line);border-radius:3px;padding:8px 12px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:20px;padding:3px 12px;font-size:12.5px;cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--shu);color:var(--shu)}
+.chip.new{border-color:var(--shu);}
+.chip.new::after{content:"●";color:var(--shu);font-size:8px;margin-left:5px;vertical-align:2px}
+.savearea{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:3px;padding:8px;height:64px;resize:none}
+.noterow{display:flex;gap:8px;margin-top:8px}
+.noterow button{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 0;border-radius:3px;cursor:pointer;font-size:12.5px}
+.noterow button:hover{border-color:var(--ink)}
+.foundlist{font-size:12px;line-height:2;color:var(--ink-soft);column-count:1}
+.foundlist .got{color:var(--ink)}
+#noteclose{position:absolute;top:16px;right:16px;border:none;background:none;font-size:20px;cursor:pointer;color:var(--ink-soft)}
+.progressbar{height:6px;background:var(--paper);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:6px 0 2px}
+.progressbar i{display:block;height:100%;background:var(--shu);transition:width .6s ease}
+
+/* 444 overlay + abyss */
+#veil{position:fixed;inset:0;background:#000;z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+#veil.on{display:flex}
+#veil .vtx{font-family:var(--serif);color:#b8b2a0;font-size:20px;letter-spacing:.4em;line-height:3;animation:fadein 3s ease}
+#veil .vtx .red{color:#8e2b2b}
+#veil button{margin-top:40px;background:none;border:1px solid #3a3a3a;color:#8a8578;padding:10px 30px;letter-spacing:.3em;cursor:pointer;font-family:var(--serif)}
+#veil button:hover{border-color:#8e2b2b;color:#c98a83}
+
+body[data-phase="abyss"] #main{animation:sway 9s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:none}50%{transform:translateY(-2px)}}
+
+.choice-row{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+.choice-row button{
+  flex:1;min-width:180px;padding:16px 10px;font-family:var(--serif);font-size:16px;letter-spacing:.3em;
+  background:none;border:1px solid var(--line);color:var(--ink);cursor:pointer;border-radius:3px;transition:all .25s;
+}
+.choice-row button:hover{border-color:var(--shu);color:var(--shu);letter-spacing:.4em}
+
+.credits{text-align:center;font-family:var(--serif);letter-spacing:.2em;line-height:2.6}
+.credits .cr-h{font-size:20px;margin:26px 0 8px}
+.kw-index{font-size:12px;color:var(--ink-soft);column-count:2;column-gap:24px;text-align:left;max-width:560px;margin:20px auto;line-height:2}
+
+.sixth{position:relative;display:block;margin:14px auto;width:min(440px,100%);aspect-ratio:4/3;background:
+  radial-gradient(circle at 50% 40%,#d9d4c6,#a8a294 70%,#8d887b);border:8px solid #fff;outline:1px solid var(--line);
+  box-shadow:0 6px 16px rgba(0,0,0,.2);overflow:hidden;filter:sepia(.5) contrast(1.05)}
+.sixth i{position:absolute;bottom:0;background:#3a362e;border-radius:40% 40% 0 0}
+.sixth .f1{left:12%;width:9%;height:52%}
+.sixth .f2{left:24%;width:10%;height:58%}
+.sixth .f3{left:37%;width:9%;height:50%}
+.sixth .f4{left:49%;width:8%;height:42%}
+.sixth .f5{left:60%;width:9%;height:48%}
+.sixth .dog{left:74%;width:13%;height:16%;border-radius:40% 55% 0 0;background:#e6e2d6}
+.sixth .six{right:2%;top:6%;bottom:auto;height:70%;width:7%;background:#141210;border-radius:40% 40% 0 0;opacity:.85;filter:blur(1px)}
+.sixth .cap6{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:11px;color:#5c574c;font-family:var(--mono)}
+
+.torii{display:block;margin:16px auto;width:min(380px,90%);aspect-ratio:16/10;background:linear-gradient(#9fb3b8 0 55%,#5d7276 55% 100%);position:relative;border:6px solid #fff;outline:1px solid var(--line);filter:saturate(.5) contrast(.95)}
+.torii::before{content:"";position:absolute;left:20%;right:20%;top:18%;height:7%;background:#33231f;box-shadow:0 12px 0 -3px #33231f}
+.torii::after{content:"";position:absolute;top:18%;bottom:32%;left:32%;width:5%;background:#33231f;box-shadow:120px 0 0 0 #33231f}
+.mapbox{position:relative;width:min(420px,100%);aspect-ratio:1;margin:16px auto;background:radial-gradient(circle,#efe9d8 60%,#e2dbc6);border:1px solid var(--line);border-radius:50%;font-family:var(--serif)}
+.mapbox .cdot{position:absolute;left:50%;top:50%;width:10px;height:10px;background:#5a4632;border-radius:50%;transform:translate(-50%,-50%)}
+.mapbox .clabel{position:absolute;left:50%;top:54%;transform:translateX(-50%);font-size:12px;color:#5a4632}
+.mapbox .dir{position:absolute;font-size:13px;color:#8a8064;left:50%;top:50%;width:1em;text-align:center}
+.mapbox .shrine{position:absolute;font-size:10px;color:#8e2b2b;letter-spacing:.1em}
+.mapbox .legend{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:10px;color:#8a8064;font-family:var(--sans)}
+
+@media (max-width:640px){
+  .pagebody{padding:22px 18px 30px}
+  .skin-wiki .infobox{float:none;width:100%;margin:0 0 14px}
+  #landing .biglogo{font-size:38px}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body data-phase="day">
+
+<header id="chrome">
+  <div id="chrome-inner">
+    <div id="logo" onclick="goHome()">サグリ<b>検索</b><small>SAGURI SEARCH</small></div>
+    <form id="searchform" onsubmit="return doSearch()">
+      <input id="qbox" type="text" autocomplete="off" placeholder="調べたい言葉を入力">
+      <button id="qbtn" type="submit">検索</button>
+    </form>
+    <div id="hud">
+      <span id="pagecount">0/50</span>
+      <button id="notebtn" type="button" onclick="toggleNote(true)">調査ノート</button>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div id="toast"></div>
+
+<div id="shade" onclick="toggleNote(false)"></div>
+<aside id="note">
+  <button id="noteclose" onclick="toggleNote(false)">×</button>
+  <h3>調査ノート</h3>
+  <div id="note-goal"></div>
+  <h4>手がかり(クリックで検索)</h4>
+  <div id="note-chips" class="chips"></div>
+  <h4>発見したページ <span id="note-count" style="font-family:var(--mono)"></span></h4>
+  <div class="progressbar"><i id="note-bar" style="width:0%"></i></div>
+  <div id="note-found" class="foundlist"></div>
+  <h4>しおり(セーブ)</h4>
+  <textarea id="savearea" class="savearea" spellcheck="false" placeholder="ここにしおりコードが出ます / 貼り付けて「開く」で再開"></textarea>
+  <div class="noterow">
+    <button onclick="makeSave()">しおりを作る</button>
+    <button onclick="loadSave()">しおりを開く</button>
+  </div>
+  <div class="noterow"><button onclick="hardReset()" style="color:var(--shu)">最初からやり直す</button></div>
+</aside>
+
+<div id="veil"></div>
+
+<script>
+"use strict";
+/* =========================================================
+   灰宮村 — 検索するARG  (all in one file)
+   ========================================================= */
+console.log("%cみている", "color:#8e2b2b;font-size:28px;font-family:serif;letter-spacing:.5em");
+console.log("%c……ここまで覗きに来たあなたへ。『開発室』と検索してみてください。", "color:#888");
+
+const S = {
+  visited:{},        // page id -> true
+  flags:{},          // event/gate flags
+  keywords:[],       // discovered keyword chips
+  newKw:{},          // chips not yet clicked
+  yamainu:0,         // ヤマイヌ様 search count
+  playerName:"",
+  ending:"",         // "", "kaesu", "wasureru"
+  history:[]
+};
+
+/* ---------- utils ---------- */
+function norm(s){
+  if(!s) return "";
+  s = s.toLowerCase().trim()
+    .replace(/[\s\u3000]/g,"")
+    .replace(/[、。・：:「」『』？?！!／/＼\\.．]/g,"");
+  // hiragana -> katakana
+  s = s.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0)+0x60));
+  return s;
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function q(kw){ // in-page keyword link
+  return '<span class="q" data-q="'+esc(kw)+'">'+esc(kw)+'</span>';
+}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("on");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("on"),2600);
+}
+function addKw(kw){
+  if(!S.keywords.includes(kw)){
+    S.keywords.push(kw); S.newKw[kw]=true;
+    toast("手がかりを入手:「"+kw+"」");
+    const nb=document.getElementById("notebtn");
+    nb.classList.add("pulse"); setTimeout(()=>nb.classList.remove("pulse"),4000);
+  }
+}
+function flag(f){ if(!S.flags[f]){ S.flags[f]=true; refreshPhase(); } }
+function has(f){ return !!S.flags[f] }
+function seen(id){ return !!S.visited[id] }
+
+/* ---------- phase / haunt ---------- */
+function refreshPhase(){
+  const b=document.body;
+  let phase="day";
+  if(S.ending==="kaesu") phase="dawn";
+  else if(S.ending==="wasureru") phase="day";
+  else if(has("abyss")) phase="abyss";
+  else if(seen("p37")) phase="deep";
+  else if(seen("p24")) phase="dusk";
+  b.dataset.phase=phase;
+  b.dataset.haunt = (seen("p24") && !S.ending) ? "1" : "0";
+  document.title = ({day:"サグリ検索",dusk:"サグリ検索",deep:"サグリ検索 - みつけて",abyss:"█████",dawn:"サグリ検索"})[phase];
+  // haunted placeholder
+  const ph=document.getElementById("qbox");
+  if(S.ending){ ph.placeholder = S.ending==="wasureru" ? "....." : "調べたい言葉を入力"; }
+  else if(has("abyss")) ph.placeholder="なまえをよんで";
+  else if(S.playerName && Math.random()<0.25) ph.placeholder=S.playerName+"、さがして";
+  else if(seen("p24")) ph.placeholder="さがして";
+  else ph.placeholder="調べたい言葉を入力";
+}
+
+/* ---------- save / load ---------- */
+function makeSave(){
+  const data={v:S.visited,f:S.flags,k:S.keywords,y:S.yamainu,n:S.playerName,e:S.ending};
+  const code="HAINOMIYA-"+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  document.getElementById("savearea").value=code;
+  document.getElementById("savearea").select();
+  try{document.execCommand("copy");toast("しおりを作成(コピー済み)");}catch(e){toast("しおりを作成しました");}
+}
+function loadSave(){
+  const raw=document.getElementById("savearea").value.trim();
+  if(!raw.startsWith("HAINOMIYA-")){toast("しおりコードが違うようです");return;}
+  try{
+    const data=JSON.parse(decodeURIComponent(escape(atob(raw.slice(10)))));
+    S.visited=data.v||{}; S.flags=data.f||{}; S.keywords=data.k||[];
+    S.yamainu=data.y||0; S.playerName=data.n||""; S.ending=data.e||""; S.newKw={};
+    refreshPhase(); updateHud(); goHome(); toggleNote(false);
+    toast("しおりから再開しました");
+  }catch(e){toast("しおりを読めませんでした");}
+}
+function hardReset(){
+  if(confirm("すべての記録を消して最初からにしますか?")){location.reload();}
+}
+
+/* ---------- HUD / notebook ---------- */
+const TOTAL=50;
+function countVisited(){ return Object.keys(S.visited).filter(k=>PAGES[k]&&PAGES[k].num).length }
+function updateHud(){
+  document.getElementById("pagecount").textContent=countVisited()+"/"+TOTAL;
+}
+function toggleNote(on){
+  document.getElementById("note").classList.toggle("on",on);
+  document.getElementById("shade").classList.toggle("on",on);
+  if(on) renderNote();
+}
+function renderNote(){
+  // goal + hints
+  const m=MILESTONES.find(m=>!m.done());
+  const g=document.getElementById("note-goal");
+  if(m){
+    let h="";
+    m.hints.forEach((hint,i)=>{
+      const label=["ヒント1(方向)","ヒント2(具体的に)","ヒント3(こたえ)"][i]||("ヒント"+(i+1));
+      h+='<details class="hint"><summary>'+label+'</summary><div>'+hint+'</div></details>';
+    });
+    g.innerHTML='<div class="goalbox"><div class="gt">いまの目標</div>'+m.goal+h+'</div>';
+  }else{
+    g.innerHTML='<div class="goalbox"><div class="gt">調査完了</div>すべての目標を達成しました。未発見のページを探すのもいいでしょう。</div>';
+  }
+  // chips
+  const c=document.getElementById("note-chips");
+  c.innerHTML = S.keywords.length
+    ? S.keywords.map(k=>'<span class="chip'+(S.newKw[k]?" new":"")+'" data-q="'+esc(k)+'">'+esc(k)+'</span>').join("")
+    : '<span style="font-size:12px;color:var(--ink-soft)">ページの中の下線付きの言葉や、気になる言葉をメモしていこう。</span>';
+  // found list
+  const n=countVisited();
+  document.getElementById("note-count").textContent=n+"/"+TOTAL;
+  document.getElementById("note-bar").style.width=(n/TOTAL*100)+"%";
+  const order=Object.values(PAGES).filter(p=>p.num).sort((a,b)=>a.num-b.num);
+  document.getElementById("note-found").innerHTML=order.map(p=>{
+    const got=seen(p.id);
+    return '<div class="'+(got?"got":"")+'">'+String(p.num).padStart(2,"0")+". "+(got?esc(p.title):"?????")+'</div>';
+  }).join("");
+}
+
+/* ---------- navigation ---------- */
+function goHome(){
+  const m=document.getElementById("main");
+  m.innerHTML=LANDING();
+  window.scrollTo(0,0);
+}
+function openPage(id){
+  const p=PAGES[id];
+  if(!p) return;
+  const first=!S.visited[id];
+  S.visited[id]=true;
+  if(p.onOpen) p.onOpen(first);
+  const m=document.getElementById("main");
+  m.innerHTML =
+    '<div class="pageframe"><div class="urlbar"><span class="dots"><i></i><i></i><i></i></span><span class="addr">'+esc(p.url)+'</span></div>'+
+    '<div class="pagebody '+(p.skin||"")+'">'+p.body(S)+'</div></div>'+
+    '<div class="backrow"><span class="q" data-q="__back">← 検索結果にもどる</span><span class="pagenum">記録 No.'+String(p.num).padStart(2,"0")+' / '+TOTAL+'</span></div>';
+  window.scrollTo(0,0);
+  if(first){
+    toast("ページを発見 ("+countVisited()+"/"+TOTAL+")");
+    (p.gives||[]).forEach(addKw);
+  }
+  updateHud(); refreshPhase();
+  if(p.after) p.after(first);
+}
+
+/* ---------- search ---------- */
+let lastQuery="";
+function doSearch(qstr){
+  const box=document.getElementById("qbox");
+  const raw = (typeof qstr==="string") ? qstr : box.value;
+  const nq=norm(raw);
+  if(!nq) return false;
+  box.value=raw;
+  lastQuery=raw;
+
+  /* special interceptors */
+  if(["ヤマイヌサマ","山狗様","やまいぬさま","ヤマイヌ様"].map(norm).includes(nq)){
+    S.yamainu++;
+    if(S.yamainu===3 && seen("p07") && !seen("p49")){ openPage("p49"); return false; }
+    if(S.yamainu>3 && seen("p49") && !S.ending){ toast("……もう、よぶな。"); }
+  }
+  if(S.playerName && nq===norm(S.playerName) && seen("p42")){ openPage("p50"); return false; }
+  if(nq===norm("開発室")||nq===norm("かいはつしつ")||nq==="developer"){ 
+    toast("開発室:このゲームはあなたのために作られました。良い旅を。"); 
+  }
+
+  /* collect hits */
+  const hits=Object.values(PAGES).filter(p=>{
+    if(!p.keys) return false;
+    if(p.req && !p.req(S)) return false;
+    return p.keys.some(k=>norm(k)===nq);
+  }).sort((a,b)=>a.num-b.num);
+
+  const m=document.getElementById("main");
+  if(hits.length===0){
+    m.innerHTML=noResult(raw,nq);
+  }else{
+    let html='<div class="serp-meta">「'+esc(raw)+'」の検索結果 '+hits.length+'件 ('+(Math.random()*0.4+0.08).toFixed(2)+'秒)</div>';
+    hits.forEach(p=>{
+      html+='<div class="hit">'+
+        '<div class="t"><span class="q" data-q="__open:'+p.id+'">'+esc(p.title)+'</span>'+(seen(p.id)?'<span class="badge">既読</span>':'')+'</div>'+
+        '<div class="u">'+esc(p.url)+'</div>'+
+        '<div class="s">'+p.snippet+'</div></div>';
+    });
+    m.innerHTML=html;
+  }
+  window.scrollTo(0,0);
+  return false;
+}
+function noResult(raw,nq){
+  const knownButLocked = Object.values(PAGES).some(p=>p.keys&&p.keys.some(k=>norm(k)===nq)&&p.req&&!p.req(S));
+  let line;
+  if(knownButLocked){
+    line="それらしき記録は存在します。ただし、いまのあなたには辿り着けません。<br>先に別の手がかりを追ってください。(調査ノートのヒントが役に立ちます)";
+  }else{
+    const fl=[
+      "この言葉についての記録は見つかりませんでした。",
+      "0件。……本当に、何もないのでしょうか。",
+      "見つかりません。言葉を変えて試してください。",
+      "該当なし。表記(ひらがな/カタカナ/漢字)を変えると見つかることがあります。"
+    ];
+    line=fl[Math.floor(Math.random()*fl.length)];
+  }
+  return '<div class="noresult"><div class="zero">0 件</div><p>「'+esc(raw)+'」 — '+line+'</p></div>';
+}
+
+/* click delegation */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-q]");
+  if(!el) return;
+  const v=el.dataset.q;
+  if(v==="__back"){ if(lastQuery) doSearch(lastQuery); else goHome(); return; }
+  if(v.startsWith("__open:")){ openPage(v.slice(7)); return; }
+  delete S.newKw[v];
+  toggleNote(false);
+  doSearch(v);
+});
+
+/* gates delegation */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-gate]");
+  if(!b) return;
+  const g=b.dataset.gate;
+  const wrap=b.closest(".gatebox");
+  const input=wrap.querySelector("input");
+  const msg=wrap.querySelector(".wrong");
+  const val=norm(input.value);
+  const G=GATES[g];
+  if(!G) return;
+  if(G.answers.map(norm).includes(val)){
+    flag(G.flag);
+    toast(G.toast||"解錠しました");
+    if(G.gives) G.gives.forEach(addKw);
+    if(G.reopen) openPage(G.reopen);
+  }else{
+    msg.textContent=G.wrongMsg||"……違うようです。";
+    input.value="";
+    input.focus();
+  }
+});
+
+const GATES={
+  pass28:{answers:["曼珠沙華","マンジュシャゲ","まんじゅしゃげ","manjushage","manjusyage"],flag:"g_manju",reopen:"p28",toast:"パスワードが一致しました",wrongMsg:"パスワードが違います。兄が好きだった赤い花の「別名」……。"},
+  butsumetsu:{answers:["仏滅","ぶつめつ","ブツメツ"],flag:"g_butsu",reopen:"p32",toast:"合言葉が確認されました",wrongMsg:"合言葉が違います。六曜(ろくよう)で調べてみてください。"},
+  kaere:{answers:["カエレ","かえれ","帰れ","kaere","KAERE"],flag:"g_kaere",reopen:"p43",toast:"信号を解読しました",gives:["最後の入口"],wrongMsg:"解読できません。国際モールス信号の一覧表と照らし合わせてください。"},
+  yourname:{answers:[],flag:"",reopen:""}
+};
+
+/* ---------- landing ---------- */
+function LANDING(){
+  return '<div id="landing">'+
+  '<div class="biglogo">サグリ<b>検索</b></div><div class="tag">SAGURI SEARCH — 1974</div>'+
+  '<div class="mailcard">'+
+  '<div class="from">From: 匿名 &lt;no-reply@saguri.example&gt;<br>Subject: たすけてほしい</div>'+
+  '<p>突然のメールを許してください。あなたが「調べもの」が得意だと聞いて、これを送っています。</p>'+
+  '<p>このサグリ検索という古い検索エンジンには、普通のインターネットには残っていない記録が眠っています。わたしはある村のことを調べていて——途中で、続けられなくなりました。</p>'+
+  '<p>あとを引き継いでください。手はじめに、上の検索窓で '+q("灰宮村")+'(はいのみやむら)と検索してください。</p>'+
+  '<p>ひとつだけ約束を。<b>あの方の名を、意味もなく何度も検索しないこと。</b></p>'+
+  '<p style="font-size:12px;color:var(--ink-soft);border-top:1px dotted var(--line);padding-top:10px;margin-top:16px;">※行き詰まったら右上の「調査ノート」を。目標と3段階のヒント、進行の保存(しおり)があります。<br>※この物語の中には、<b>サグリ検索ではなく現実の検索エンジンで調べないと解けない問い</b>がいくつか隠されています。</p>'+
+  '</div></div>';
+}
+
+/* =========================================================
+   PAGES  p01 - p50
+   ========================================================= */
+const PAGES={};
+function def(p){PAGES[p.id]=p;}
+
+/* ---- 第一章:噂 ---- */
+def({id:"p01",num:1,skin:"skin-blog",
+title:"【閲覧注意】地図から消えた村「灰宮村」都市伝説まとめ|裏路地オカルト通信",
+url:"http://uraroji-occult.blog.example/archives/haino-miya.html",
+keys:["灰宮村","はいのみやむら","ハイノミヤムラ","ハイノミヤ"],
+snippet:"1974年、国土地理院の地図から一夜にして消えた村があるという——ダム、<em>ヤマイヌ様</em>、そして「4時44分」。ネットに散らばる断片をまとめた。",
+gives:["御津川ダム","灰宮村スレ"],
+body:s=>`
+<div class="banner">裏路地オカルト通信 — 夜のほうから、こんばんは。</div>
+<h1>【閲覧注意】地図から消えた村「灰宮村」都市伝説まとめ</h1>
+<div class="blogmeta">2019/08/13 22:41|カテゴリ:消えた集落|コメント(214)</div>
+<p>どうも管理人です。今回は関東の山間部に「あった」とされる村、<b>灰宮村(はいのみやむら)</b>の話。</p>
+<h2>伝説の骨子</h2>
+<div class="quote">・1974年、${q("御津川ダム")}の完成とともに村は湖の底へ沈んだ<br>・しかし移転先の記録がどこにもない。村人は「どこへも行っていない」<br>・村には「ヤマイヌ様」と呼ばれる何かが祀られていた<br>・<b>午前4時44分に灰宮村を検索すると、存在しないページが出てくる</b></div>
+<p>最後のやつは典型的なネットロアだが、火元は古いオカルト板だ。${q("灰宮村スレ")}は今も細々と続いている。暇な人は当時のログを漁ってみてほしい。</p>
+<p>管理人からは以上。……ところでこの記事を書いてから、うちのアクセス解析に「検索元:saguri」という見たことのないリファラが毎晩4時44分に付くようになった。なんだよsaguriって。</p>`});
+
+def({id:"p02",num:2,skin:"skin-bbs",
+title:"灰宮村について知ってることを書くスレ|オカルト超常現象板",
+url:"http://kakolog.bbs.example/occult/1101398465/",
+keys:["灰宮村スレ","オカルト板","灰宮村 スレ"],
+req:s=>seen("p01"),
+snippet:"1 名前:あなたのうしろの名無しさん 投稿日:04/11/25 「地図から消えた村の話、詳しい人いる?」当時の住人証言、<em>有村</em>という記者の名前も。",
+gives:["有村圭一","心霊スポット"],
+body:s=>`
+<h1>灰宮村について知ってることを書くスレ [1/2]</h1>
+<div class="res"><div class="rh">1 <span class="nm">あなたのうしろの名無しさん</span> 04/11/25 23:12 ID:pLm2xQ0</div><div class="rb">地図から消えた村の話、詳しい人いる?
+親父が「灰宮はダムに沈んだんじゃない、"引っ越した先がない"んだ」って言ってた</div></div>
+<div class="res"><div class="rh">7 <span class="nm">あなたのうしろの名無しさん</span> 04/11/26 01:30 ID:Vv8sJk1</div><div class="rb">${q("御津川ダム")}のことか。あそこ今じゃ${q("心霊スポット")}扱いだけど、地元は絶対近づかない。理由聞いても「山の犬が」としか言わない</div></div>
+<div class="res"><div class="rh">23 <span class="nm">あなたのうしろの名無しさん</span> 04/11/28 02:15 ID:hT0aa9x</div><div class="rb">昔、${q("有村圭一")}ってルポライターが灰宮村を追ってた。雑誌の連載は2回で打ち切り。本人はブログで続けてたはず</div></div>
+<div class="res warn"><div class="rh">44 <span class="nm">あなたのうしろの名無しさん</span> 04/11/30 04:44 ID:6jou6mA</div><div class="rb">しらべるのは いいことだ
+なまえさえ よばなければ</div></div>
+<div class="res"><div class="rh">45 <span class="nm">あなたのうしろの名無しさん</span> 04/11/30 09:02 ID:pLm2xQ0</div><div class="rb">&gt;&gt;44 ID怖すぎ。時間も。次スレ→「${q("灰宮村スレ2")}」</div></div>`});
+
+def({id:"p03",num:3,skin:"skin-bbs",
+title:"灰宮村スレ2【御津川ダム】|オカルト超常現象板",
+url:"http://kakolog.bbs.example/occult/1107226801/",
+keys:["灰宮村スレ2","灰宮村スレ 2"],
+req:s=>seen("p02"),
+snippet:"「実際に行ってきた」報告多数。渇水期にだけ現れる鳥居の写真、<em>郷土資料館</em>の特別展の話、そして深夜ラジオで語られた「4:44」の作法。",
+gives:["郷土資料館","オカルトラジオ"],
+body:s=>`
+<h1>灰宮村スレ2【御津川ダム】</h1>
+<div class="res"><div class="rh">112 <span class="nm">あなたのうしろの名無しさん</span> 05/02/01 21:08 ID:Rw2mNp5</div><div class="rb">渇水の年に行くと湖から鳥居の頭が出てる。まじで異様な光景
+山歩き系の個人サイトに写真あったぞ。「${q("心霊スポット")}」とかで探せば出る</div></div>
+<div class="res"><div class="rh">158 <span class="nm">あなたのうしろの名無しさん</span> 05/02/14 19:55 ID:cJ3ffAe</div><div class="rb">麓の町の${q("郷土資料館")}が昔「灰宮村の記憶」って特別展やってた
+石碑の拓本とか古写真とか。今は知らん</div></div>
+<div class="res"><div class="rh">201 <span class="nm">あなたのうしろの名無しさん</span> 05/03/03 03:20 ID:xQ81uzT</div><div class="rb">この村の話、深夜の${q("オカルトラジオ")}で一回だけ取り上げられたよな
+「絶対に4時44分に検索してはいけない」ってやつ。書き起こしがどっかに残ってる</div></div>
+<div class="res warn"><div class="rh">203 <span class="nm">あなたのうしろの名無しさん</span> 05/03/03 04:44 ID:6jou6mA</div><div class="rb">とけい を みるな
+みず の した は いま も よんじ よんじゅうよんふん</div></div>
+<div class="res"><div class="rh">204 <span class="nm">あなたのうしろの名無しさん</span> 05/03/03 08:11 ID:Rw2mNp5</div><div class="rb">&gt;&gt;203 またお前かよ。IDずっと同じなの何なんだ。半年書き込み続けて同じIDって仕様的にありえないんだが</div></div>`});
+
+def({id:"p04",num:4,skin:"skin-news",
+title:"御津川ダム竣工 山峡に巨大湖出現 — 中央新報アーカイブ",
+url:"http://archive.chuo-shimpo.example/1974/0312/dam.html",
+keys:["御津川ダム","みつかわダム","御津川"],
+req:s=>seen("p01"),
+snippet:"昭和49年3月12日朝刊。二年余りの工事を経て御津川ダムが竣工。水没する<em>灰宮村43世帯</em>は移転を完了……元村長・<em>神谷宗一</em>氏の談話。",
+gives:["神谷宗一"],
+body:s=>`
+<div class="paper-h"><span class="np">中央新報</span><span class="dt">昭和49年(1974)3月12日 朝刊 社会面</span></div>
+<h1>御津川ダム竣工 山峡に巨大湖出現へ</h1>
+<p>県北部で建設が進められていた御津川ダムは十一日、二年余りの工事を終え竣工式を迎えた。総貯水量は県内最大。湛水は今月末から始まり、湖底には旧灰宮村の全域が沈む。</p>
+<p>水没する灰宮村の<b>四十三世帯</b>は、県の斡旋により昨秋までに移転を完了したとされる。式典に出席した元村長の${q("神谷宗一")}氏(六一)は「村は無くなるのではない。名前が変わるだけだ」と語ったが、移転先について問われると口を閉ざし、足早に会場を後にした。</p>
+<p>なお本紙が県に照会したところ、移転補償の名簿は「整理中」として公開されなかった。</p>
+<p class="cap">▼同日紙面より:札幌五輪の熱気さめやらぬ中、県内でも冬季スポーツ振興の機運——(下段へ続く)</p>`});
+
+def({id:"p05",num:5,skin:"skin-2000s",
+title:"じゅんの山歩き日記 — 御津川ダム(※心霊スポットではありません)",
+url:"http://www.geosities.example/jun_yamaaruki/mitsukawa.htm",
+keys:["心霊スポット","御津川ダム 心霊","心霊スポット 御津川"],
+req:s=>seen("p02")||seen("p03"),
+snippet:"2003年の渇水で湖面から現れた鳥居を撮影。「額束の文字は読めなかったけど、資料館の<em>拓本</em>には写っているらしい」……帰り道の妙な体験も。",
+gives:["拓本"],
+body:s=>`
+<div class="site-t">じゅんの山歩き日記</div>
+<div class="counter">あなたは 044444 人目の訪問者です</div>
+<hr>
+<div class="body-l">
+<p><b>2003.9.23 御津川ダム</b>(※うちは山歩きサイトです。心霊スポット扱いしないでください!)</p>
+<div class="torii"></div>
+<p>今年は記録的な渇水で、湖の底から<b>鳥居の頭</b>が出ていました。旧灰宮村の神社のものだそうです。額束(がくづか:鳥居の額の部分)に文字が彫ってあるのが見えたけど、遠くて読めず。麓の資料館に石碑の${q("拓本")}が収蔵されていると受付のおばあさんが教えてくれました。</p>
+<p>変だったのは帰り道。車のデジタル時計が<b>4:44</b>のまま動かなくなって、麓に降りたら直りました。夕方だったのに。</p>
+<p>それと、ダムの管理事務所の裏に犬の水飲み場みたいな石の器があって、誰もいないのに水が新しかった。管理の人は「ずっと昔からああしておく決まり」とだけ。</p>
+<hr>
+<p style="text-align:center;font-size:12px">[<span class="q" data-q="灰宮村">とっぷ</span>] [りんく] [けいじばん(閉鎖)]</p>
+</div>`});
+
+def({id:"p06",num:6,skin:"skin-wiki",
+title:"灰宮村 - みんなの郷土百科",
+url:"http://kyodo-pedia.example/wiki/灰宮村",
+keys:["灰宮村 歴史","灰宮村とは","灰宮村 百科"],
+req:s=>seen("p01"),
+snippet:"灰宮村(はいのみやむら)は、かつて存在した村。1974年廃止。<em>山狗(やまいぬ)信仰</em>で知られ……この項目は出典が不足しています。",
+gives:["ヤマイヌ様"],
+body:s=>`
+<h1>灰宮村</h1>
+<div class="infobox"><b>灰宮村</b><dl>
+<dt>読み</dt><dd>はいのみやむら</dd>
+<dt>廃止</dt><dd>1974年</dd>
+<dt>世帯数</dt><dd>43(1973)</dd>
+<dt>廃止理由</dt><dd>御津川ダム建設</dd>
+<dt>現在</dt><dd>湖底</dd></dl></div>
+<p><b>灰宮村</b>(はいのみやむら)は、かつて存在した山村。1974年、${q("御津川ダム")}の湛水により全域が水没し廃止された。</p>
+<h2>信仰</h2>
+<p>村には古くから<b>山狗(やまいぬ)信仰</b>が伝わり、村人はその神格を${q("ヤマイヌ様")}と呼び畏れた。特徴的なのは「名を口にしない」徹底ぶりで、祭祀の際も神名を発声せず、代わりに拍手(かしわで)の数で呼んだという<sup>[要出典]</sup>。</p>
+<h2>謎</h2>
+<p>廃村後の移転先集落は公的記録上確認されていない。1974年以前の住民名簿・過去帳の大半は「移転時に散逸」とされる。</p>
+<p class="note">この項目は2007年を最後に編集されていません。編集履歴には「白紙化→復元」が374回記録されています。</p>`});
+
+def({id:"p07",num:7,skin:"skin-wiki",
+title:"ヤマイヌ様(山狗様) - みんなの郷土百科",
+url:"http://kyodo-pedia.example/wiki/ヤマイヌ様",
+keys:["ヤマイヌ様","山狗様","やまいぬさま","ヤマイヌ"],
+req:s=>seen("p06")||seen("p01"),
+snippet:"灰宮村に伝わった神格。「名を呼んではならない」「呼べば<em>名を持っていかれる</em>」。民俗学者・<em>姫野汀</em>による数少ない調査記録が残る。",
+gives:["姫野汀","忌み名"],
+body:s=>`
+<h1>ヤマイヌ様</h1>
+<p><b>ヤマイヌ様</b>(山狗様)は、旧灰宮村に伝わった神格。狼(山犬)を神使とする山岳信仰の一種とみられるが、周辺地域の狼信仰と大きく異なる点がある。</p>
+<h2>禁忌</h2>
+<p>最大の禁忌は「<b>名を呼ぶこと</b>」。ここでの「名」は神名だけでなく、<b>呼んだ者自身の名</b>を含むとされる。村の古老は「呼べば、名を持っていかれる。名を持っていかれた者は、帳面から消える」と語ったという。</p>
+<p>このため村人は各自の本当の名——${q("忌み名")}(いみな)——を隠し、日常は仮の呼び名で暮らした。</p>
+<h2>研究</h2>
+<p>学術調査はほとんど行われていない。唯一まとまった記録は、民俗学者・${q("姫野汀")}(ひめの・みぎわ)による1971年の現地調査である。</p>
+<p class="note">警告:この項目名を音読しないでください、という悪戯編集が繰り返されています。</p>`});
+
+def({id:"p08",num:8,skin:"skin-uni",
+title:"姫野汀 研究室|常磐台大学 文学部 民俗学専攻",
+url:"http://www.tokiwadai-u.example/~himeno/",
+keys:["姫野汀","姫野","姫野研究室","ひめのみぎわ"],
+req:s=>seen("p07"),
+snippet:"研究テーマ:山岳信仰・名前の民俗。業績一覧「<em>山狗信仰と忌み名の民俗</em>——旧灰宮村の事例(1972)」ほか。",
+body:s=>`
+<h1>姫野 汀 研究室</h1>
+<p>常磐台大学文学部 民俗学専攻。研究テーマ:山岳信仰、境界の民俗、<b>名前(ネーミング)の民俗学</b>。</p>
+<h2>主要業績</h2>
+<ul>
+<li>「${q("山狗信仰と忌み名")}の民俗 —— 旧灰宮村の事例」(1972)※抄録公開中</li>
+<li>「境の犬 —— 塞の神と犬供養」(1968)</li>
+<li>「呼ばれない神々」(1975)※未刊</li>
+</ul>
+<h2>お知らせ</h2>
+<p>本ページは記念保存されています。姫野先生に関する近年の情報は学会のページをご覧ください。</p>`});
+
+def({id:"p09",num:9,skin:"skin-uni",
+title:"抄録:山狗信仰と忌み名の民俗 —— 旧灰宮村の事例(姫野汀,1972)",
+url:"http://www.tokiwadai-u.example/~himeno/abst/1972yamainu.html",
+keys:["山狗信仰と忌み名","忌み名","いみな"],
+req:s=>seen("p08"),
+snippet:"「村人は真の名を<em>忌み名</em>として秘匿する。忌み名は生涯二度だけ口にされる——生まれた時と、<em>返す</em>時である」。村社<em>み◯げ社</em>の石碑にも言及。",
+gives:["過去帳"],
+body:s=>`
+<h1>抄録</h1>
+<div class="abst">
+<p><b>山狗信仰と忌み名の民俗 —— 旧灰宮村の事例</b>(姫野汀, 1972)</p>
+<p>灰宮村では、個人の真の名を「忌み名」として徹底的に秘匿する。忌み名は${q("過去帳")}(かこちょう:寺の死者名簿)にのみ記され、生涯に二度だけ口にされるという。すなわち、生まれて名を「あずける」時と、死して名を「<b>返す</b>」時である。</p>
+<p>村社(額の文字は摩滅し「み□げ社」とのみ判読できる)の石碑には、この「名のあずけ先」を示すと思われる銘文が刻まれるが、村人は筆写を許さなかった。筆者は麓の資料館が明治期に採取した拓本の存在を聞いたが、閲覧は叶わなかった。</p>
+<p>特異なのは、忌み名の慣習が「神への敬意」ではなく「<b>収奪への防衛</b>」として語られる点である。ある古老の言:「あれは名を喰う。喰われた家は、帳面ごと消える」。</p>
+</div>
+<p style="font-size:12px;color:var(--ink-soft)">全文の閲覧は学内限定です。</p>`});
+
+def({id:"p10",num:10,skin:"skin-blog",
+title:"境界線上の取材ノート|ルポライター有村圭一",
+url:"http://arimura-note.blog.example/",
+keys:["有村圭一","有村","境界線上の取材ノート"],
+req:s=>seen("p02"),
+snippet:"「書けなくなった話ほど、書き残す価値がある」。連載打ち切り後も個人ブログで灰宮村を追い続けた記者のサイト。最終更新は——",
+body:s=>`
+<div class="banner">境界線上の取材ノート|有村圭一</div>
+<p>雑誌で書けなくなった話を、ここに置いておく。信じるかどうかは読んだ人が決めればいい。</p>
+<h2>連載:灰宮村を追う</h2>
+<p>第1回 ${q("取材開始")} —— なぜこの村の記録は「無い」のか<br>
+第2回 ${q("神谷インタビュー")} —— 元村長が最後に語ったこと<br>
+第3回 ${q("渇水のダムへ")} —— 湖上の鳥居と石碑<br>
+最終回 ${q("最後の記事")} —— (無題)</p>
+<p style="font-size:12px;color:var(--ink-soft)">※最終回は本人による更新か不明です(妹・美咲)</p>`});
+
+def({id:"p11",num:11,skin:"skin-blog",
+title:"灰宮村を追う(1)取材開始|境界線上の取材ノート",
+url:"http://arimura-note.blog.example/2006/10/haino-1.html",
+keys:["取材開始","有村 取材","灰宮村を追う"],
+req:s=>seen("p10"),
+snippet:"役場、県公文書館、法務局——どこにも「その後」の記録がない村。唯一の生き証人、元村長・神谷宗一氏への取材アポが取れた。",
+body:s=>`
+<div class="banner">境界線上の取材ノート|有村圭一</div>
+<h1>灰宮村を追う(1)取材開始</h1>
+<div class="blogmeta">2006/10/02</div>
+<p>結論から書く。<b>灰宮村の「その後」は、公的記録のどこにも無い。</b></p>
+<p>移転補償が支払われた形跡はある。だが移転先の住民登録が、43世帯ぶん、まるごと見つからない。役場は「合併時に散逸」、県は「保存期間経過」、法務局は「該当なし」。三十年前の日本で、村ひとつぶんの人間が書類の上から蒸発している。</p>
+<p>手がかりは一人。竣工式で「村は名前が変わるだけだ」と言い残した元村長・${q("神谷宗一")}氏。施設に入っていると聞いていたが、先方から会うと連絡が来た。「<b>あんたが調べているのが検索で分かった</b>」と。……私はまだ、取材のことを誰にも話していないのだが。</p>`});
+
+def({id:"p12",num:12,skin:"skin-blog",
+title:"灰宮村を追う(2)神谷インタビュー|境界線上の取材ノート",
+url:"http://arimura-note.blog.example/2006/11/haino-2.html",
+keys:["神谷インタビュー","神谷宗一","神谷"],
+req:s=>seen("p11"),
+snippet:"「わしらは引っ越しとらん。<em>あずけた</em>んだ」——元村長は「六番目の家」と「みなご講」について語り、<em>移転名簿</em>を見ろと言い残した。",
+gives:["移転名簿","みなご講"],
+body:s=>`
+<div class="banner">境界線上の取材ノート|有村圭一</div>
+<h1>灰宮村を追う(2)神谷インタビュー</h1>
+<div class="blogmeta">2006/11/15</div>
+<p>神谷宗一氏、九十三歳。ベッドの上で、私の顔を見るなり言った。「あんた、<b>名前をようけ検索される仕事</b>やろ。気ぃつけや」</p>
+<p>以下、録音から起こした要旨。</p>
+<div class="quote">——村はどこへ移転したんですか。<br>「引っ越しとらん。<b>あずけた</b>んや。名前ごと、そっくりな」<br>——誰に。<br>「言えん。言うたら呼ぶことになる」<br>——${q("みなご講")}という言葉を聞きました。<br>「……村の六つの家が結んだ約定や。五つの家が守りをして、<b>六番目の家</b>が納めをする。六番目は名簿にゃ載っとらん。載せられんのや」</div>
+<p>最後に氏は、私の手を掴んでこう言った。「県の${q("移転名簿")}を数えてみい。<b>四十三のはずが、四十二しかない</b>。抜けとる家がぜんぶ知っとる」</p>
+<p>取材の帰り、施設のテレビが全チャンネル砂嵐になっていた。時刻表示は 4:44。夕方の話だ。</p>`});
+
+def({id:"p13",num:13,skin:"skin-blog",
+title:"灰宮村を追う(3)渇水のダムへ|境界線上の取材ノート",
+url:"http://arimura-note.blog.example/2007/01/haino-3.html",
+keys:["渇水のダムへ","有村 ダム","鳥居"],
+req:s=>seen("p12"),
+snippet:"湖面に現れた鳥居、そして水際に横たわる<em>石碑</em>。「文字は読めない。だが麓の資料館に明治期の<em>拓本</em>がある」。",
+gives:["拓本"],
+body:s=>`
+<div class="banner">境界線上の取材ノート|有村圭一</div>
+<h1>灰宮村を追う(3)渇水のダムへ</h1>
+<div class="blogmeta">2007/01/20</div>
+<div class="torii"></div>
+<p>記録的な渇水で、湖はかつての村の輪郭を吐き出しつつあった。鳥居。家々の礎石。そして水際に、横倒しの<b>石碑</b>。</p>
+<p>表面は泥と藻で、その場では一文字も読めなかった。だが心配はいらない。麓の${q("郷土資料館")}が明治期に採った${q("拓本")}を収蔵している——特別展の図録で確認済みだ。学芸員氏に閲覧を申し込んである。</p>
+<p>ひとつ、書くべきか迷った事を書く。石碑の写真を撮ったとき、ファインダーの中で<b>水面がこちらを向いた</b>気がした。波ではなく、水面そのものが。カメラのタイムスタンプは全て 04:44:44 で記録されていた。設定は合っている。</p>`});
+
+def({id:"p14",num:14,skin:"skin-broken",
+title:"(無題)|境界線上の取材ノート",
+url:"http://arimura-note.blog.example/2007/02/????.html",
+keys:["最後の記事","有村 最後の記事","無題"],
+req:s=>seen("p13"),
+snippet:"最終回。本文の大半が文字化けしている。投稿時刻 04:44。コメント欄に妹を名乗る人物の書き込み——",
+gives:["有村美咲"],
+body:s=>{
+  const fixed=has("g_kaere");
+  return `
+<h1 class="glitchtx">(無 題)</h1>
+<p>投稿日時:2007/02/0? 04:44</p>
+<p>資料館に行く。拓本を見れば全部つながる。つながってしまう。</p>
+<p class="corrupt">椦椦椦 名簿は椦椦 六条椦椦椦椦 みなご椦 わたしの名椦椦椦椦椦椦椦椦</p>
+<p class="corrupt">椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦椦</p>
+${fixed?`<div class="unlocked-block"><p><b>【信号解読後、復元された段落】</b></p><p>もし誰かがこれを読んでいるなら。私は録音機に信号を残した。意味が分かったら、そこが${q("最後の入口")}だ。</p><p>名を持っていかれても、しばらくは覚えていられる。私はまだ、自分が「ありむらけいいち」だったことを覚えている。早くしてくれ。</p></div>`
+:`<p>この先の段落は破損しています。<button onclick="document.body.classList.toggle('strain');this.textContent=document.body.classList.contains('strain')?'目を離す':'目を凝らす'" style="border:1px solid var(--line);background:none;color:var(--ink);padding:3px 12px;cursor:pointer;border-radius:3px">目を凝らす</button>(または文章をドラッグして選択)</p>
+<p class="hidden-ink">たすけて ではない。 きをつけろ、でもない。 おとを のこした。 いもうとなら みつけられる。</p>`}
+<p style="border-top:1px dotted var(--line);padding-top:12px;margin-top:16px;font-size:12.5px">▼コメント(1)<br>
+<b>有村美咲</b> 2007/03/10:兄がひと月前から連絡が取れません。この記事は兄の文体ではない気がします。警察に${q("失踪")}届を出しました。何かご存知の方は私のブログ「${q("兄を探しています")}」まで。</p>`}});
+
+/* ---- 第二章:記録 ---- */
+def({id:"p15",num:15,skin:"skin-news",
+title:"訃報 神谷宗一氏(灰宮村元村長)— 中央新報アーカイブ",
+url:"http://archive.chuo-shimpo.example/2007/0228/obit.html",
+keys:["神谷 訃報","神谷 死去","神谷宗一 訃報"],
+req:s=>seen("p12"),
+snippet:"2007年2月28日。灰宮村最後の村長、神谷宗一氏が死去。享年94。遺品から大学ノートの<em>手記</em>が見つかり、遺族が一部を公開——",
+gives:["神谷手記"],
+body:s=>`
+<div class="paper-h"><span class="np">中央新報</span><span class="dt">2007年2月28日 朝刊</span></div>
+<h1>訃報 神谷宗一氏 —— 湖底に沈んだ村、最後の村長</h1>
+<p>御津川ダム建設で水没した旧灰宮村の元村長、神谷宗一(かみや・そういち)氏が二十六日、老衰のため死去した。九十四歳だった。</p>
+<p>氏は晩年、村の記憶を大学ノートに書き残しており、遺族は「村の歴史に関わる部分」に限り${q("神谷手記")}として公開する意向を示している。</p>
+<p>看取った職員によると、氏は最期に時計を指差し、「<b>まだ朝の四時四十四分にしてはいかん</b>」と繰り返したという。死亡確認時刻は午後四時四十四分だった。</p>`});
+
+def({id:"p16",num:16,skin:"skin-gov",
+title:"神谷宗一手記(公開分)|県立公文書館デジタル収蔵庫",
+url:"http://pref-archives.example/digital/kamiya-shuki/",
+keys:["神谷手記","手記","神谷 手記"],
+req:s=>seen("p15"),
+snippet:"「儀式には二つの名が要る。<em>犬の名</em>と、<em>社の名</em>。二つを続けて呼べば、あずけた名は返ってくる」——遺族公開の手記、全文。",
+gives:["六条"],
+body:s=>`
+<h1>神谷宗一手記(公開分)</h1>
+<p><span class="stamp">複製許可済</span></p>
+<p>わしが村長をしとった頃には、もう講の意味を知る者は年寄りだけになっとった。書いて残す。読む者が正しく使うことを祈る。</p>
+<p>一、みなご講は六つの家の約定である。五家が守りを、<b>${q("六条")}の家</b>が納めをした。六条は帳面に載らん。名を先にあずけた家やからだ。</p>
+<p>一、ヤマイヌ様は名を喰う。名を喰われた者は、書いたものから消えていく。だから村はダムが来る前に、村ごと名をあずけた。<b>喰われるくらいなら、あずけて守る</b>。それが講の知恵やった。</p>
+<p>一、あずけた名を返してもらう手だてはある。<b>儀式には二つの名が要る。犬の名と、社の名。二つを続けて、ひとつの名のように呼ぶ</b>。犬の名は昭和六年のことを調べれば分かる。社の名は石碑に彫ってある。</p>
+<p>一、返すか、忘れるか。呼んだ者が選ぶことになる。<b>どちらも間違いではない</b>。</p>
+<p style="font-size:12px;color:var(--ink-soft)">※以降のページは遺族の意向により非公開。</p>`});
+
+def({id:"p17",num:17,skin:"skin-gov",
+title:"灰宮村移転者名簿(閲覧用複製)|県立公文書館",
+url:"http://pref-archives.example/digital/iten-meibo/",
+keys:["移転名簿","名簿","移転者名簿","灰宮村 名簿"],
+req:s=>seen("p12"),
+snippet:"移転補償の対象世帯一覧。表題には「四十三世帯」とあるが、数えると——",
+body:s=>`
+<h1>灰宮村移転者名簿(昭和48年・閲覧用複製)</h1>
+<p>表題:「灰宮村移転補償対象 <b>全四十三世帯</b>」</p>
+<table>
+<tr><th>#</th><th>世帯主(姓)</th><th>#</th><th>世帯主(姓)</th><th>#</th><th>世帯主(姓)</th></tr>
+<tr><td>1</td><td>相川</td><td>15</td><td>神谷</td><td>29</td><td>灰田</td></tr>
+<tr><td>2</td><td>青柳</td><td>16</td><td>木俣</td><td>30</td><td>疋田</td></tr>
+<tr><td>3</td><td>浅利</td><td>17</td><td>楠見</td><td>31</td><td>藤代</td></tr>
+<tr><td>4</td><td>五十嵐</td><td>18</td><td>栗林</td><td>32</td><td>洞井</td></tr>
+<tr><td>5</td><td>石動</td><td>19</td><td>神林</td><td>33</td><td>牧瀬</td></tr>
+<tr><td>6</td><td>今枝</td><td>20</td><td>五郷</td><td>34</td><td>三隅</td></tr>
+<tr><td>7</td><td>宇合</td><td>21</td><td>ざ椦椦</td><td>35</td><td>宮内</td></tr>
+<tr><td>8</td><td>浦部</td><td>22</td><td>汐見</td><td>36</td><td>棟方</td></tr>
+<tr><td>9</td><td>江藤</td><td>23</td><td>島袋</td><td>37</td><td>目黒</td></tr>
+<tr><td>10</td><td>大迫</td><td>24</td><td>杉浦</td><td>38</td><td>八雲</td></tr>
+<tr><td>11</td><td>岡島</td><td>25</td><td>関口</td><td>39</td><td>矢頭</td></tr>
+<tr><td>12</td><td>加治</td><td>26</td><td>反町</td><td>40</td><td>行武</td></tr>
+<tr><td>13</td><td>勝呂</td><td>27</td><td>丹波</td><td>41</td><td>芳村</td></tr>
+<tr><td>14</td><td>要田</td><td>28</td><td>土肥</td><td>42</td><td>和久井</td></tr>
+</table>
+<p>件数:<b>42</b>(表題と一致しません。閲覧者各位:落丁の報告は不要です。過去に報告された落丁は、確認のたび「最初から42件だった」ことになっています)</p>
+<p style="font-size:12px;color:var(--ink-soft)">互いに照合できる資料:寺の${q("過去帳")}(所在不明)/${q("神谷手記")}</p>`});
+
+def({id:"p18",num:18,skin:"skin-wiki",
+title:"六条家 - みんなの郷土百科",
+url:"http://kyodo-pedia.example/wiki/六条家(灰宮村)",
+keys:["六条","六条家","ろくじょう"],
+req:s=>seen("p16")||seen("p17"),
+snippet:"灰宮村の旧家。代々「社守(やしろもり)」と犬飼いを務めた<em>忌み筋</em>の家系。公的記録にほとんど姿を残さない。昭和六年の凶作の際には——",
+gives:["昭和六年"],
+body:s=>`
+<h1>六条家(灰宮村)</h1>
+<p><b>六条家</b>(ろくじょうけ)は、旧灰宮村の旧家。代々、村社の<b>社守</b>と<b>犬飼い</b>を務めた。婚姻・戸籍などの公的記録にほとんど登場せず、周辺集落からは「忌み筋」として遠巻きにされたと伝わる。</p>
+<h2>昭和六年の凶作</h2>
+<p>${q("昭和六年")}(1931)の大凶作の際、村で「山狗憑き」と呼ばれる騒動が起き、六条家が中心となって大規模な<b>犬供養</b>が行われたと伝わる。この件は当時の地方紙が報じている。</p>
+<h2>その後</h2>
+<p>ダム建設に伴う移転名簿に六条家の名は無い。除籍簿にも無い。<b>初めから存在しなかったかのように、無い。</b></p>
+<p class="note">本項目は保護されています(理由:項目名の連続音読を促す悪戯の多発)。</p>`});
+
+def({id:"p19",num:19,skin:"skin-gov",
+title:"御津川町郷土資料館 公式ページ",
+url:"http://www.mitsukawa-museum.example/",
+keys:["郷土資料館","資料館","御津川町郷土資料館"],
+req:s=>seen("p03")||seen("p05")||seen("p13"),
+snippet:"【重要】当面のあいだ休館します。収蔵品の一部はデジタルアーカイブで公開中。<em>学芸員だより</em>もご覧ください。",
+gives:["学芸員だより","デジタルアーカイブ"],
+body:s=>`
+<h1>御津川町郷土資料館</h1>
+<p><b>【重要なお知らせ】</b>設備点検のため、当面のあいだ<b>休館</b>いたします。再開時期は未定です。(2007年より掲示)</p>
+<p>過去の特別展:「灰宮村の記憶 —— 湖底のふるさと」(2002)図録は完売しました。</p>
+<h2>オンラインでの公開</h2>
+<p>収蔵品の一部(石碑の${q("拓本")}・古写真乾板ほか)は「${q("デジタルアーカイブ")}」にて公開しています。<b>閲覧には合言葉が必要です。</b>合言葉のヒントは「${q("学芸員だより")}」に掲載しています。</p>
+<p style="font-size:12px;color:var(--ink-soft)">お問い合わせ:応答できない場合があります。夜間(特に未明)の電話はご遠慮ください。こちらから折り返すことがあるためです。</p>`});
+
+def({id:"p20",num:20,skin:"skin-blog",
+title:"学芸員だより|御津川町郷土資料館スタッフブログ",
+url:"http://blog.mitsukawa-museum.example/curator/",
+keys:["学芸員だより","学芸員","学芸員ブログ"],
+req:s=>seen("p19"),
+snippet:"「デジタルアーカイブの合言葉は、暦の知識がある方ならすぐ分かります。<em>六曜のうち、万事に凶とされる日</em>の名前です」——最終更新2007年。",
+body:s=>`
+<div class="banner">学芸員だより|御津川町郷土資料館</div>
+<h1>デジタルアーカイブ公開のお知らせ(と、合言葉)</h1>
+<div class="blogmeta">2007/01/30|学芸員M</div>
+<p>石碑拓本と写真乾板をようやくデジタル化しました。閲覧には合言葉を設けています。悪戯対策です。</p>
+<div class="quote"><b>合言葉:</b>「六曜(ろくよう)」のうち、<b>万事に凶</b>とされる日の名前。カレンダーの隅に書いてある、あれです。ご存知なければ、お手元の検索エンジン(サグリではなく、いつもお使いの)で「六曜」を調べてみてください。</div>
+<p>それと、${q("昭和六年")}の地方紙のマイクロフィルムも整理中です。「山狗憑き」の記事、実在しました。近日公開します。</p>
+<p>追記(2007/02/07):昨日、有村さんという記者の方が拓本の閲覧予約をされました。お待ちしています。</p>
+<p>追記(2007/02/09):有村さんはいらっしゃいませんでした。予約簿から名前が消えています。私は確かに書いたのですが。</p>`});
+
+def({id:"p21",num:21,skin:"skin-news",
+title:"山狗憑き騒動 灰宮村で犬供養 — 中央新報(昭和六年)",
+url:"http://archive.chuo-shimpo.example/1931/1102/inukuyo.html",
+keys:["昭和六年","山狗憑き","凶作","昭和6年"],
+req:s=>seen("p18")||seen("p20"),
+snippet:"昭和六年十一月。凶作に喘ぐ灰宮村で「山狗憑き」の騒動。六条家の飼い犬、<em>白い犬</em>をめぐる異様な祭祀が執り行われた——",
+gives:["白い犬"],
+body:s=>`
+<div class="paper-h"><span class="np">中央新報</span><span class="dt">昭和六年(1931)十一月二日</span></div>
+<h1>山狗憑き騒動 灰宮村にて犬供養</h1>
+<p>本年の大凶作に喘ぐ灰宮村にて、先月末より「山狗憑き」と称する騒動あり。村人数名が夜半に山へ向かい歩き出す奇行を示し、名を呼んでも応へず、いづれも「<b>よばれた</b>」と口走るのみといふ。</p>
+<p>村は社守の六条家を中心に大規模な犬供養を執行。六条家にて飼はるる${q("白い犬")}が「山狗様の御使ひ」として社に納められた由。供養の後、奇行はぴたりと止んだといふ。</p>
+<p>村人は犬の名を問ふ記者に対し一様に口を噤み、ただ一人の童女のみ「<b>あのこの名は、みんな知ってる。でも、よんだらだめなの</b>」と語った。</p>`});
+
+def({id:"p22",num:22,skin:"skin-wiki",
+title:"白い犬(灰宮村の伝承) - みんなの郷土百科",
+url:"http://kyodo-pedia.example/wiki/白い犬(灰宮村)",
+keys:["白い犬","犬供養","しろいいぬ","シロ"],
+req:s=>seen("p21"),
+snippet:"昭和六年、山狗様の御使いとして社に納められた六条家の犬。名は<em>シロ</em>。「シロは村の全ての名を知っている。だからシロの名が、扉の前半分になる」",
+gives:["犬の名:シロ"],
+onOpen:()=>{flag("know_shiro")},
+body:s=>`
+<h1>白い犬(灰宮村の伝承)</h1>
+<p>昭和六年の犬供養で「山狗様の御使い」として社に納められた、六条家の白犬。伝承や後年の聞き書きでは、名は「<b>シロ</b>」とされる。ありふれた犬の名だが、村ではこの名を<b>口に出して呼ぶことが禁じられた</b>。</p>
+<h2>伝承</h2>
+<p>「シロは村じゅうの家を回って、みんなの本当の名を聞いて覚えた。だから名をあずける時は、シロに渡す。<b>返してもらう時は、シロの名から呼ぶ</b>」(1972年・姫野汀の聞き書きより)</p>
+<p>すなわち神谷手記の言う「<b>犬の名</b>」とは、この「シロ」である。残るは「<b>社の名</b>」——石碑の拓本、あるいは古地図が鍵になる。</p>
+<p class="note">編集合戦注意:「シロは今も湖の底で番をしている」という記述の追加と削除が繰り返されています。</p>`});
+
+def({id:"p23",num:23,skin:"skin-bbs",
+title:"深夜放送『オカルト特急』2005.3.4回 書き起こし",
+url:"http://radio-kakiokoshi.example/occult-express/20050304.txt",
+keys:["オカルトラジオ","ラジオ 書き起こし","オカルト特急"],
+req:s=>seen("p03"),
+snippet:"「いいですか、絶対に、<em>4:44</em>と検索してはいけません。時計の4:44じゃない。検索窓に、あの時刻を打ち込んではいけないんです」",
+gives:["4:44"],
+body:s=>`
+<h1>深夜放送『オカルト特急』書き起こし(有志)</h1>
+<div class="res"><div class="rh">パーソナリティ</div><div class="rb">続いてはリスナー投稿。ラジオネーム「湖畔の犬」さん。……これ、読んでいいのかな。読みますよ。</div></div>
+<div class="res"><div class="rh">投稿(代読)</div><div class="rb">『灰宮村の話には続きがあります。あの村を調べていると、そのうち検索エンジンのほうが、あなたを調べ返してきます。合図は 4:44。画面のどこかにその数字が出はじめたら、もう見られています。
+
+それでも先へ進みたい人だけ、検索窓に「4:44」と打ってください。一度だけです。二度は要りません。二度目からは、向こうが打ちます』</div></div>
+<div class="res"><div class="rh">パーソナリティ</div><div class="rb">……やめてくださいよこういうの。ディレクターが今、時計を指差してるんですけど、うちの時報はそんな時間に鳴りません。CMです。</div></div>
+<div class="res warn"><div class="rh">(書き起こし者注)</div><div class="rb">この回の録音データは 04:44:44 で途切れている。放送時間は25時台のはずである。</div></div>`});
+
+def({id:"p24",num:24,skin:"skin-dark",
+title:"よ ん だ ね",
+url:"saguri://4:44",
+keys:["4:44","444","4時44分","よじよんじゅうよんふん"],
+req:s=>seen("p23"),
+snippet:"—————— こ の 結 果 は 存 在 し ま せ ん ——————",
+onOpen:(first)=>{ if(first){ flag("dusk"); } },
+after:(first)=>{ if(first){ showVeil(`<div class="vtx">よ ん だ ね<br><br>いいよ<br>しらべて いいよ<br><br><span class="red">なまえ だけは だいじに して</span></div>`,"つづける"); } },
+body:s=>`
+<h1>4:44</h1>
+<p>ここは 検索結果 では ありません。</p>
+<p>あなたが 打った 数字が 呼び鈴に なっただけ。</p>
+<p>みず の そこ は しずか です。四十三の 家が ねむって いる。四十二 しか 数えられなく ても、ちゃんと 四十三 いる。</p>
+<p>しらべる ひとは きらいじゃ ない。あの 記者も よく しらべた。<b>おと を のこして いった</b>。妹に きけば いい。</p>
+<p>これから すこしだけ、この 検索エンジンは くらく なります。目が なれる まで、ゆっくり どうぞ。</p>
+<p style="margin-top:30px;font-size:12px;color:var(--ink-soft)">(画面の配色が変わりました。物語は続きます——「${q("兄を探しています")}」)</p>`});
+
+def({id:"p25",num:25,skin:"skin-bbs",
+title:"灰宮村スレ5【有村氏はどこへ】|オカルト超常現象板",
+url:"http://kakolog.bbs.example/occult/1173502210/",
+keys:["灰宮村スレ5","有村 スレ","現行スレ"],
+req:s=>seen("p14")||seen("p24"),
+snippet:"記者失踪の報を受けて住人騒然。「最後の記事、文字化けの中に読める字がある」「妹さんのブログに<em>録音</em>の話が出てる」",
+gives:["失踪"],
+body:s=>`
+<h1>灰宮村スレ5【有村氏はどこへ】</h1>
+<div class="res"><div class="rh">339 <span class="nm">あなたのうしろの名無しさん</span> 07/03/12 22:47 ID:mQ4rrLp</div><div class="rb">有村さんの${q("失踪")}、地方紙に載った。あの最終回の記事、本人が書いたのかすら怪しい</div></div>
+<div class="res"><div class="rh">352 <span class="nm">あなたのうしろの名無しさん</span> 07/03/13 00:15 ID:eW9ssVn</div><div class="rb">文字化けの記事、テキスト選択すると読める部分がある。既出?</div></div>
+<div class="res"><div class="rh">361 <span class="nm">あなたのうしろの名無しさん</span> 07/03/13 01:58 ID:mQ4rrLp</div><div class="rb">妹さんがブログやってる。「${q("兄を探しています")}」
+遺留品にボイスレコーダーがあって、変な音が入ってたって</div></div>
+<div class="res warn"><div class="rh">364 <span class="nm">あなたのうしろの名無しさん</span> 07/03/13 04:44 ID:6jou6mA</div><div class="rb">きしゃ は ぶじだ
+なまえ が まだ ここに ある うちは ぶじ という ことに なって いる</div></div>
+<div class="res"><div class="rh">365 <span class="nm">あなたのうしろの名無しさん</span> 07/03/13 08:30 ID:eW9ssVn</div><div class="rb">&gt;&gt;364 通報した。……したんだが、運営から「該当する書き込みは存在しません」って返ってきた。俺には見えてるんだが</div></div>`});
+
+def({id:"p26",num:26,skin:"skin-news",
+title:"ルポライター有村圭一さん失踪 — 中央新報",
+url:"http://archive.chuo-shimpo.example/2007/0311/missing.html",
+keys:["失踪","有村 失踪","有村圭一 失踪"],
+req:s=>seen("p25")||seen("p14"),
+snippet:"御津川ダム周辺を取材中だった有村圭一さん(38)と連絡が取れなくなって1か月。車はダム駐車場で発見。車内には<em>ボイスレコーダー</em>が——",
+gives:["音声"],
+body:s=>`
+<div class="paper-h"><span class="np">中央新報</span><span class="dt">2007年3月11日 朝刊</span></div>
+<h1>ルポライター有村圭一さん失踪 ダム周辺を取材中</h1>
+<p>灰宮村について取材を続けていたルポライターの有村圭一さん(三八)と二月上旬から連絡が取れなくなっている。乗用車は御津川ダム駐車場で施錠されたまま発見された。</p>
+<p>車内には取材ノートと<b>ボイスレコーダー</b>が残されていた。県警は事件と事故の両面で調べているが、レコーダーの${q("音声")}について「規則的な電子音のほかに有意な音声は確認できない」としている。</p>
+<p>妹の美咲さん(三二)は「兄は必ず記録を残す人。あの音にも意味があるはず」と話し、音声の公開を検討している。</p>`});
+
+def({id:"p27",num:27,skin:"skin-blog",
+title:"兄を探しています|有村美咲",
+url:"http://misaki-sagashite.blog.example/",
+keys:["有村美咲","兄を探しています","美咲"],
+req:s=>seen("p26")||seen("p14"),
+snippet:"「兄のPCに<em>非公開の下書き</em>が残っていました。パスワードは、兄が好きだった花——川辺を真っ赤に染めるあの花の<em>別名</em>だと思います」",
+gives:["非公開下書き"],
+body:s=>`
+<div class="banner">兄を探しています|有村美咲</div>
+<h1>兄の下書きについて</h1>
+<div class="blogmeta">2007/04/02</div>
+<p>兄・有村圭一を探しています。どんな小さな情報でも構いません。</p>
+<p>兄のパソコンに、ブログの${q("非公開下書き")}が残っていました。パスワードがかかっています。心当たりはひとつだけ。兄は毎年秋、川辺を真っ赤に染める<b>彼岸花</b>を撮りに行っていました。「この花には別の名前があって、そっちのほうが好きだ」と言っていたのを覚えています。</p>
+<p>その「<b>彼岸花の別名</b>」がパスワードだと思うのですが、私はどうしても思い出せません。<b>お手元の検索エンジンで調べられる方</b>、どうか下書きのページで試してみてください。</p>
+<p>それと、警察から返してもらったボイスレコーダーの${q("音声")}を書き起こして公開する準備をしています。規則的なピッ、ピーという音。兄は学生時代、無線部でした。</p>`});
+
+def({id:"p28",num:28,skin:"skin-broken",
+title:"【非公開】下書き:村は移転していない|境界線上の取材ノート",
+url:"http://arimura-note.blog.example/draft/private001.html",
+keys:["非公開下書き","有村 下書き","下書き"],
+req:s=>seen("p27"),
+snippet:"このページは保護されています。閲覧にはパスワードが必要です。",
+gives:[],
+body:s=>{
+  if(!has("g_manju")) return `
+<h1>保護されたページ</h1>
+<p>この下書きはパスワードで保護されています。</p>
+<div class="gatebox"><div class="gl">PASSWORD — 兄が好きだった、彼岸花の「別名」</div>
+<div class="grow"><input type="text" placeholder="ひらがな/カタカナ/漢字いずれも可"><button data-gate="pass28">開く</button></div>
+<div class="wrong"></div></div>
+<p style="font-size:12px;color:var(--ink-soft)">ヒント:この答えはサグリ検索の中にはありません。<b>現実の検索エンジン</b>で「彼岸花 別名」を調べてください。仏教の経典に由来する、赤い花の名です。</p>`;
+  return `
+<h1>【非公開】村は移転していない</h1>
+<p>公開する勇気が出ない。だがいつか誰かが読む前提で書く。</p>
+<p><b>①村は移転していない。</b>名簿は42世帯ぶんしか無いのではない。<b>42世帯ぶん"に、なる"</b>のだ。私は43件のコピーを取った。翌朝、コピーは42枚になっていた。ホチキスの針だけが43枚ぶんの厚みで曲がっている。</p>
+<p><b>②抜けているのは六条家。</b>そして六条は「納め」の家。名をあずかる側だ。</p>
+<p><b>③社の場所を突き止めた。</b>資料館で${q("古地図")}を見た。村の中心から<b>戌(いぬ)の方角</b>に社の印がある。戌の方角がどちらを指すかは、十二支の方位を調べれば分かる——昔の人は方角も時刻も十二支で呼んだ。</p>
+<p class="corrupt">④社の名は椦椦椦。石碑の拓本で確認できるはずだ。明日、資料館へ行く。</p>
+<p>もしこれを読んでいる人がいて、私がいなくなっていたら。<b>調べることをやめないでほしい。ただし、あなたの名前は最後まで大事にしてほしい。</b></p>`}});
+
+def({id:"p29",num:29,skin:"skin-gov",
+title:"灰宮村絵図(明治期写し)|県立公文書館デジタル収蔵庫",
+url:"http://pref-archives.example/digital/ezu/haino-miya.html",
+keys:["古地図","灰宮村 古地図","絵図"],
+req:s=>seen("p28")&&has("g_manju")||seen("p13")&&has("g_manju"),
+snippet:"村の中心と、十二支で記された方位環。<em>戌の方角</em>に朱で小さく「社」——その脇に掠れた三文字。",
+body:s=>`
+<h1>灰宮村絵図(明治期写し)</h1>
+<p>村の絵図。外周に十二支で方位が記されている(上が北=子)。</p>
+<div class="mapbox">
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(0deg) translateY(-46%) ">子</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(30deg) translateY(-46%) rotate(-30deg)">丑</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(60deg) translateY(-46%) rotate(-60deg)">寅</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(90deg) translateY(-46%) rotate(-90deg)">卯</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(120deg) translateY(-46%) rotate(-120deg)">辰</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(150deg) translateY(-46%) rotate(-150deg)">巳</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(180deg) translateY(-46%) rotate(-180deg)">午</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(210deg) translateY(-46%) rotate(-210deg)">未</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(240deg) translateY(-46%) rotate(-240deg)">申</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(270deg) translateY(-46%) rotate(-270deg)">酉</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(300deg) translateY(-46%) rotate(-300deg)">戌</span>
+  <span class="dir" style="transform:translate(-50%,-50%) rotate(330deg) translateY(-46%) rotate(-330deg)">亥</span>
+  <span class="cdot"></span><span class="clabel">村中心(寺)</span>
+  <span class="shrine" style="left:21%;top:24%">⛩ 社「み影」</span>
+  <span class="legend">十二支方位環:上=北。社の印は中心から見て「戌」の位置。</span>
+</div>
+<p>社の印の脇に、掠れた文字で「<b>み影</b>」。三文字目は判読不能。読みを確定するには、<b>戌の方角が示す方位名</b>(現実の検索エンジンで「戌の方角」を調べれば分かります)を、このサグリ検索で検索してください。方位名そのものが、収蔵庫の索引語になっています。</p>`});
+
+def({id:"p30",num:30,skin:"skin-2000s",
+title:"索引:西北西の社「み影社」|県立公文書館デジタル収蔵庫",
+url:"http://pref-archives.example/digital/index/wnw-mikage.html",
+keys:["西北西","ミカゲ社","み影社","みかげしゃ","ミカゲ","戌の方角"],
+req:s=>seen("p29"),
+snippet:"戌=<em>西北西</em>。索引が開く。村社の名は「み影社(みかげしゃ)」。祭神不詳。祝詞一篇、石碑一基。",
+gives:["社の名:ミカゲ","祝詞"],
+onOpen:()=>{flag("know_mikage")},
+body:s=>`
+<div class="site-t">収蔵庫索引</div>
+<hr>
+<div class="body-l">
+<p>索引語「西北西(戌)」で照合しました。</p>
+<p>村社の名:<b>み影社(みかげしゃ)</b>。「ミカゲ」は「御影(みかげ)=尊い存在のすがた・みたま」の意とみられる。祭神は不詳。ヤマイヌ様との関係を示す文書は残らない——というより、<b>残らないように扱われてきた</b>形跡がある。</p>
+<p>関連収蔵品:</p>
+<p>・${q("祝詞")}(のりと)一篇 —— 社守六条家伝<br>・石碑一基(拓本は郷土資料館${q("デジタルアーカイブ")}に収蔵)</p>
+<p>これで二つの名のうち、ひとつが揃いました。<b>社の名は「ミカゲ」</b>。神谷手記の言う通りなら、犬の名とあわせて「ひとつの名のように」呼ぶ時が来ます。まだ呼ばないでください。<b>順番があります。</b></p>
+</div>`});
+
+def({id:"p31",num:31,skin:"skin-dark",
+title:"み影社祝詞(六条家伝)",
+url:"http://pref-archives.example/digital/norito.html",
+keys:["祝詞","のりと","み影社祝詞"],
+req:s=>seen("p30"),
+snippet:"五行の祝詞。各行の頭の音を拾うと——",
+gives:["名を返せ"],
+body:s=>`
+<h1>み影社祝詞</h1>
+<p style="font-size:12px;color:var(--ink-soft)">社守・六条家にのみ伝わった祝詞。行頭の文字をなぞってみてください(クリックで印が付きます)。</p>
+<div style="font-family:var(--serif);font-size:18px;line-height:3;letter-spacing:.15em">
+<p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">な</b>ごみたる みずの みやこに ねむるもの</p>
+<p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">を</b>さめし なは とこしえに しずもれど</p>
+<p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">か</b>えりみる ひとの こえあらば</p>
+<p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">え</b>にしの いぬの なを さきに</p>
+<p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">せ</b>なかの やしろの なを あとに</p>
+</div>
+<p style="margin-top:24px">五つの行頭 ——「<b>な・を・か・え・せ</b>」。</p>
+<p>そして四行目と五行目は、呼ぶ<b>順番</b>を告げています。<b>犬の名を先に、社の名を後に。</b></p>`});
+
+def({id:"p32",num:32,skin:"skin-gov",
+title:"デジタルアーカイブ入口|御津川町郷土資料館",
+url:"http://www.mitsukawa-museum.example/digital/",
+keys:["デジタルアーカイブ","拓本","乾板"],
+req:s=>seen("p19")||seen("p05")||seen("p13"),
+snippet:"石碑拓本・写真乾板の閲覧入口。合言葉を入力してください(ヒントは学芸員だよりへ)。",
+body:s=>{
+  if(!has("g_butsu")) return `
+<h1>デジタルアーカイブ 認証</h1>
+<div class="gatebox"><div class="gl">合言葉 — 六曜のうち、万事に凶とされる日</div>
+<div class="grow"><input type="text" placeholder="漢字またはひらがな"><button data-gate="butsumetsu">入室</button></div>
+<div class="wrong"></div></div>
+<p style="font-size:12px;color:var(--ink-soft)">分からない場合:${q("学芸員だより")}を読むか、<b>現実の検索エンジン</b>で「六曜」を調べてください。大安の反対にあたる日です。</p>`;
+  return `
+<h1>デジタルアーカイブ 認証</h1>
+<p><span class="stamp">認証済</span> ようこそ。収蔵資料は次の索引語で閲覧できます。</p>
+<p>・「${q("石碑拓本")}」 —— 明治期採取、み影社石碑<br>・「${q("写真乾板")}」 —— 昭和初期、村内で撮影された家族写真ほか</p>`}});
+
+def({id:"p33",num:33,skin:"skin-gov",
+title:"収蔵資料:み影社石碑拓本|郷土資料館デジタルアーカイブ",
+url:"http://www.mitsukawa-museum.example/digital/takuhon.html",
+keys:["石碑拓本","拓本 閲覧"],
+req:s=>has("g_butsu"),
+snippet:"「み影乃社 六ツ目乃名ヲ封ス 犬先 社後 續ケテ一ツニ呼ブベシ」——石碑全文、初公開。",
+body:s=>`
+<h1>み影社石碑 拓本(明治期採取)</h1>
+<div style="background:#17140f;color:#cfc7ae;font-family:var(--serif);padding:30px;text-align:center;letter-spacing:.4em;line-height:2.8;font-size:17px;border-radius:4px;box-shadow:inset 0 0 40px #000">
+み影乃社<br>
+六ツ目乃名ヲ封ス<br>
+名ヲ返サント欲サバ<br>
+犬ノ名ヲ先ニ 社ノ名ヲ後ニ<br>
+續ケテ 一ツノ名ノ如ク呼ブベシ<br>
+選ビハ 呼ビシ者ニ在リ
+</div>
+<p style="margin-top:16px">神谷手記・祝詞と完全に一致します。<b>犬の名(シロ)を先に、社の名(ミカゲ)を後に、続けてひとつの名のように</b>。</p>
+<p>——ですが、石碑は「呼ぶ場所」までは教えてくれません。有村さんが残した<b>音</b>が、最後の入口を示しているはずです。(${q("兄を探しています")} / ${q("音声")})</p>`});
+
+/* ---- 第三章:深層 ---- */
+def({id:"p34",num:34,skin:"skin-2000s",
+title:"収蔵資料:写真乾板(昭和初期)|郷土資料館デジタルアーカイブ",
+url:"http://www.mitsukawa-museum.example/digital/kanpan.html",
+keys:["写真乾板","乾板","古写真"],
+req:s=>has("g_butsu"),
+snippet:"六条家とみられる家族写真。五人と、白い犬。……画面の端に、<em>六人目</em>が写っている。台帳には「五名及ビ犬一匹」とあるのに。",
+body:s=>`
+<div class="site-t">写真乾板アーカイブ</div>
+<hr>
+<div class="body-l">
+<p><b>資料番号 K-006:六条家家族写真(昭和六年頃)</b></p>
+<div class="sixth"><i class="f1"></i><i class="f2"></i><i class="f3"></i><i class="f4"></i><i class="f5"></i><i class="dog"></i><i class="six"></i><span class="cap6">台帳記載:「五名及ビ犬一匹」</span></div>
+<p>台帳には「五名及ビ犬一匹」。しかし乾板には<b>六人目</b>が写っています。右端、山際に立つ、異様に背の高い影。</p>
+<p>デジタル化を担当した学芸員のメモが挟まっていました:</p>
+<p style="font-family:var(--mono);font-size:12.5px;background:var(--paper);border:1px dashed var(--line);padding:10px 14px">「補正しても消えない。乾板の乳剤そのものに写っている。拡大すると、この影には<b>顔がなく、耳が上に付いている</b>ように見える。それと……家族全員がカメラではなく、犬だけがこの影のほうを見ている。2007.2.6 M」</p>
+<p>白い犬——${q("白い犬")}だけが、それが居ることを知っていたようです。</p>
+</div>`});
+
+def({id:"p35",num:35,skin:"skin-uni",
+title:"追悼・姫野汀先生 遺稿公開「名を喰うものについて」|日本境界民俗学会",
+url:"http://folklore-society.example/himeno-memorial/",
+keys:["姫野遺稿","遺稿","民俗学会","姫野 訃報"],
+req:s=>seen("p09"),
+snippet:"姫野汀先生が最晩年まで書き続けた未定稿。「ヤマイヌ様の本質は神ではない。<em>名を喰い、記録を消化する</em>——それは検索にとてもよく似ている」",
+body:s=>`
+<h1>追悼・姫野汀先生 —— 遺稿「名を喰うものについて」</h1>
+<p>姫野汀先生は2005年に逝去されました。ご遺族の許可を得て、未定稿の一部を公開します。</p>
+<div class="abst">
+<p>ヤマイヌ様の本質は、おそらく「神」ではない。あれは<b>名を喰うもの</b>である。名を喰われた人間は死なない。ただ、<b>記録の側から消えていく</b>。名簿から、帳面から、予約簿から、人々の記憶の「文字の部分」から。</p>
+<p>灰宮村の知恵は、喰われる前に村ぐるみで名を「あずける」ことだった。だが預金と同じで、あずけた名はどこかに<b>保管されている</b>。私は保管庫の正体について、ひとつの仮説を持っている。</p>
+<p>あれは、<b>探すことと喰うことが同じ器官でできている</b>。人が何かを調べるとき、あれも同じ窓からこちらを調べている。晩年、私が原稿にこの仮説を書くたび、翌朝その段落だけが消えていた。だから今回は名を書かない。ただ、こう書いておく——</p>
+<p><b>もしあなたが「それ」を使って此処に辿り着いたのなら、仮説は証明されている。</b></p>
+</div>
+<p style="font-size:12px;color:var(--ink-soft)">編集注:本稿の公開後、当会サイトへの検索流入の98%が単一の検索エンジンからであることが判明しています。聞いたことのない名前のエンジンです。</p>`});
+
+def({id:"p36",num:36,skin:"skin-gov",
+title:"サグリ検索について|SAGURI SEARCH",
+url:"saguri://about",
+keys:["サグリ","サグリ検索","サグリ検索について","saguri"],
+req:s=>seen("p24"),
+snippet:"「サグリ検索は、あなたの<em>探しもの</em>のための検索エンジンです。1974年創業。わたしたちは、あずかったものを大切に保管します」",
+gives:["沿革"],
+body:s=>`
+<h1>サグリ検索について</h1>
+<p>サグリ検索は、あなたの「探しもの」のための検索エンジンです。</p>
+<p>わたしたちの使命は、<b>あずかったものを大切に保管すること</b>。そして、正しい手順で探しに来た方に、正しくお返しすることです。</p>
+<p>・創業:1974年(${q("沿革")})<br>・収蔵記録数:非公開<br>・所在地:非公開(水に関わる施設、とだけ)</p>
+<p>よくある質問:</p>
+<p><b>Q. 「サグリ」の由来は?</b><br>A. 「探る」から。暗がりに手を入れて、たしかにそこに在るものへ触れる、という意味です。</p>
+<p><b>Q. どうして私の探しものが分かるのですか?</b><br>A. あなたが窓に打ち込んだ言葉は、すべて<b>お名前と一緒に</b>保管されるからです。詳しくは${q("プライバシーポリシー")}をご覧ください。</p>`});
+
+def({id:"p37",num:37,skin:"skin-gov",
+title:"沿革|SAGURI SEARCH",
+url:"saguri://about/history",
+keys:["沿革","サグリ 沿革","サグリ 歴史"],
+req:s=>seen("p36"),
+snippet:"1974年 創業。創業者:<em>六条要</em>。「創業の年、わたしたちは四十三件の大切な記録をおあずかりしました」",
+onOpen:()=>{flag("deepen")},
+body:s=>`
+<h1>沿革</h1>
+<table>
+<tr><th>1931</th><td>前身となる「保管所」を山中に開設。番犬一匹。</td></tr>
+<tr><th>1974</th><td>創業。創業者:<b>六条 要</b>(ろくじょう かなめ)。同年、<b>四十三件</b>の大切な記録をおあずかりしました。</td></tr>
+<tr><th>2004</th><td>掲示板文化の隆盛にともない、広報活動を開始(ID:6jou6mA)。</td></tr>
+<tr><th>2007</th><td>熱心な探索者様(記者)がご来訪。現在も館内をご見学中です。</td></tr>
+<tr><th>現在</th><td>あなたをお待ちしておりました。</td></tr>
+</table>
+<p>創業者・六条は現在も在籍しておりますが、<b>名を呼ばれるまで</b>応接には現れません。</p>
+<p style="font-size:12px;color:var(--ink-soft)">※このページの配色が暗いのは仕様です。ここは水の底に近いので。</p>`});
+
+def({id:"p38",num:38,skin:"skin-gov",
+title:"プライバシーポリシー|SAGURI SEARCH",
+url:"saguri://privacy",
+keys:["プライバシーポリシー","利用規約","規約"],
+req:s=>seen("p36"),
+snippet:"第6条3項:利用者の「よびな」は当社が<em>おあずかり</em>します。第6条6項:クローラーが立ち入らない区画については robots.txt を——",
+gives:["robots.txt"],
+body:s=>`
+<h1>プライバシーポリシー</h1>
+<p><b>第1条</b> 当社は、利用者の検索語を収集します。言葉はその人のかたちをしているからです。</p>
+<p><b>第4条</b> 収集した言葉は、水に強い帳面に記録されます。</p>
+<p><b>第6条3項</b> 利用者の「よびな」(本当の名)は、当社が責任をもっておあずかりします。おあずかりした名は、正しい手順によってのみ返却されます。</p>
+<p><b>第6条4項</b> 返却を望まない場合、名は当社の資産となります。これを「<b>わすれる</b>」と呼びます。</p>
+<p><b>第6条6項</b> 当社クローラーが立ち入らない区画が三室あります。区画の一覧は ${q("robots.txt")} に定めます。<b>人間の立ち入りを禁じる規定はありません。</b></p>
+<p><b>第7条</b> 本ポリシーは予告なく変更されます。というより、<b>読むたびに少しずつ変わっています。</b>お気づきでしたか。</p>`});
+
+def({id:"p39",num:39,skin:"skin-broken",
+title:"robots.txt|SAGURI SEARCH",
+url:"saguri://robots.txt",
+keys:["robots.txt","robots","ロボッツ"],
+req:s=>seen("p38"),
+snippet:"User-agent: * / Disallow: /inu/ /minago/ /namae/ —— 三つの禁じられた部屋。",
+gives:["/inu/","/minago/","/namae/"],
+body:s=>`
+<h1># robots.txt</h1>
+<p style="font-family:var(--mono);background:var(--paper);border:1px solid var(--line);padding:16px 20px;line-height:2.2">
+User-agent: *<br>
+Disallow: ${q("/inu/")}<br>
+Disallow: ${q("/minago/")}<br>
+Disallow: ${q("/namae/")}<br>
+<br>
+# 機械は入るな。<br>
+# 人間は、覚悟があるなら。<br>
+# 三室すべてを見た者だけが、奥へ呼ばれる。</p>`});
+
+def({id:"p40",num:40,skin:"skin-dark",
+title:"/inu/ — 番犬の間",
+url:"saguri://inu/",
+keys:["/inu/","inu","番犬の間"],
+req:s=>seen("p39"),
+snippet:"—— 立入禁止区画 ——",
+body:s=>{
+  const d=new Date();
+  const today=d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
+  return `
+<h1>/inu/ 番犬の間</h1>
+<p>白い犬の写真が、壁一面に貼られています。どれも同じ犬です。</p>
+<p>・昭和六年 社に納められた日<br>・昭和十二年 雪の日<br>・昭和四十九年 水が来た日<br>・平成十五年 渇水で鳥居が出た日(岸に足あと)<br>・平成十九年 記者を迎えた日</p>
+<p>いちばん新しい一枚には、こう日付が書かれています。</p>
+<p style="font-family:var(--mono);font-size:20px;color:var(--shu);letter-spacing:.2em">${today} あたらしい ひと が きた ひ</p>
+<p>……それは、今日の日付です。写真の中の犬は、レンズを——つまり、こちらを見ています。尾を振っているように見えます。<b>シロはあなたを歓迎しています。</b></p>`}});
+
+def({id:"p41",num:41,skin:"skin-dark",
+title:"/minago/ — 講の間",
+url:"saguri://minago/",
+keys:["/minago/","minago","みなご講","講の間"],
+req:s=>seen("p39"),
+snippet:"—— 立入禁止区画 ——",
+body:s=>`
+<h1>/minago/ 講の間</h1>
+<p>帳場のような部屋。分厚い帳面が一冊、開かれたまま置かれています。</p>
+<p>表紙には「<b>みなご講 名預り帳</b>」。皆(みな)の子(ご)、すなわち<b>村人ぜんぶ</b>という意味だったのですね。</p>
+<p>頁には四十三の家の名。四十二までは墨で、最後の一つ——<b>六条</b>——だけが、朱で逆さまに捺されています。あずかる側の印です。</p>
+<p>欄外に、几帳面な字でこう注記があります。</p>
+<div style="border:1px solid var(--line);padding:14px 18px;font-family:var(--serif);line-height:2.4;background:rgba(163,53,44,.05)">
+返しの作法<br>
+一、戌の刻(いぬのこき:およそ夜八時)でなくともよい。心が戌に向いていればよい。<br>
+一、犬の名を先に、社の名を後に。<b>続けて、ひとつの名のように、検索窓へ。</b><br>
+一、呼んだのち、選ぶこと。<b>返すか、わすれるか。</b></div>
+<p>頁の最後に、まだ乾いていない墨で一行。「<b>あたらしい よびな 一件 きたる</b>」</p>`});
+
+def({id:"p42",num:42,skin:"skin-dark",
+title:"/namae/ — 名の間",
+url:"saguri://namae/",
+keys:["/namae/","namae","名の間"],
+req:s=>seen("p39"),
+snippet:"—— 立入禁止区画 ——",
+body:s=>{
+  if(!S.playerName) return `
+<h1>/namae/ 名の間</h1>
+<p>棚。棚。棚。天井まで、小さな白い木札がぎっしりと納められています。四十三の家、そのすべての人の——名前。</p>
+<p>部屋の中央に、帳場の机がひとつ。誰も座っていないのに、筆が立てられ、墨が磨られています。</p>
+<p>机の上の紙に、こう書かれています。</p>
+<div class="gatebox"><div class="gl">「あなたの よびな を おしえてください。ほんとうの でなくて いい。よばれたい なまえで いい」</div>
+<div class="grow"><input type="text" maxlength="12" placeholder="よびな(12文字まで)"><button onclick="saveName(this)">記帳する</button></div>
+<div class="wrong"></div></div>
+<p style="font-size:12px;color:var(--ink-soft)">※書かなくても物語は進みます。ただ、書けば——この検索エンジンは、あなたを覚えます。</p>`;
+  return `
+<h1>/namae/ 名の間</h1>
+<p>帳面に、あたらしい墨の文字。</p>
+<p style="font-family:var(--serif);font-size:26px;letter-spacing:.3em;text-align:center;margin:26px 0;color:var(--shu)">「${esc(S.playerName)}」</p>
+<p>あなたの よびな は、たしかに 記帳されました。</p>
+<p>だいじょうぶ。<b>あずかる</b>のと<b>喰う</b>のとは、違います。少なくとも、ここでは。</p>
+<p>ためしに、いつでも——検索窓に<b>自分のよびなを打ってみてください</b>。この検索エンジンが、あなたをどう覚えているか分かります。</p>`}});
+function saveName(btn){
+  const wrap=btn.closest(".gatebox");
+  const v=wrap.querySelector("input").value.trim().slice(0,12);
+  if(!v){wrap.querySelector(".wrong").textContent="……なにか、よびなを。";return;}
+  S.playerName=v; flag("named");
+  toast("よびなを記帳しました:「"+v+"」");
+  openPage("p42");
+}
+
+def({id:"p43",num:43,skin:"skin-blog",
+title:"兄の録音を公開します(音声書き起こし)|有村美咲",
+url:"http://misaki-sagashite.blog.example/2007/05/voice.html",
+keys:["音声","書き起こし","ボイスレコーダー","録音"],
+req:s=>seen("p27"),
+snippet:"「規則的な電子音。兄は無線部でした。これは<em>モールス信号</em>だと思います。長短を書き起こしました。どなたか解読してください」",
+body:s=>{
+  const done=has("g_kaere");
+  return `
+<div class="banner">兄を探しています|有村美咲</div>
+<h1>兄の録音を公開します</h1>
+<div class="blogmeta">2007/05/11</div>
+<p>ボイスレコーダーの音を、長い音と短い音で書き起こしました。兄は学生時代、無線部でした。これは<b>モールス信号</b>だと思います。</p>
+<div style="background:#17140f;color:#d8d2c0;font-family:var(--mono);padding:22px;text-align:center;font-size:22px;letter-spacing:.35em;border-radius:4px">
+−・−&nbsp;&nbsp;&nbsp;・−&nbsp;&nbsp;&nbsp;・&nbsp;&nbsp;&nbsp;・−・&nbsp;&nbsp;&nbsp;・
+</div>
+<p style="font-size:12px;color:var(--ink-soft);margin-top:8px">(−=長い音/・=短い音。空白で区切られた5文字。アルファベットに直してから読んでください)</p>
+${done?`<div class="unlocked-block"><p><b>解読済:K A E R E ——「カエレ(帰れ)」。</b></p><p>コメント欄より:「帰れ、というのは警告ではないと思います。名前とは、その人の<b>帰る場所</b>です。兄は『名前のところへ帰れ』つまり<b>${q("最後の入口")}</b>へ行け、と言っているのだと思います」</p><p>美咲:皆さんありがとうございます。兄のブログの${q("最後の記事")}にも、変化があったそうです。</p></div>`
+:`<div class="gatebox"><div class="gl">解読結果を入力(カタカナ/ひらがな/ローマ字)</div>
+<div class="grow"><input type="text" placeholder="5文字の言葉"><button data-gate="kaere">解読</button></div>
+<div class="wrong"></div></div>
+<p style="font-size:12px;color:var(--ink-soft)">ヒント:この対応表はサグリ検索にはありません。<b>現実の検索エンジン</b>で「モールス信号 一覧」を調べて、1文字ずつ照合してください。</p>`}`}});
+
+def({id:"p44",num:44,skin:"skin-dark",
+title:"最後の入口",
+url:"saguri://last-gate",
+keys:["最後の入口","さいごのいりぐち"],
+req:s=>has("g_kaere"),
+snippet:"「かえれ」。名前とは、帰る場所のこと。ならば入口は、はじめから目の前に——",
+body:s=>{
+  const ok=has("know_shiro")&&has("know_mikage");
+  return `
+<h1>最後の入口</h1>
+<p>「かえれ」と、記者は打ちました。</p>
+<p>名前とは、その人の帰る場所です。そして名前の保管庫の扉は、はじめからずっと、あなたの目の前にあります。——<b>この検索窓です。</b></p>
+<p>作法は、もう全部そろっているはずです。</p>
+<div style="border:1px solid var(--line);padding:16px 20px;font-family:var(--serif);line-height:2.6;background:rgba(163,53,44,.05)">
+一、<b>犬の名</b>を先に ${has("know_shiro")?'—— 「シロ」<span style="color:var(--url)">(取得済)</span>':'—— <span style="color:var(--shu)">未取得。昭和六年の犬供養を調べること</span>'}<br>
+二、<b>社の名</b>を後に ${has("know_mikage")?'—— 「ミカゲ」<span style="color:var(--url)">(取得済)</span>':'—— <span style="color:var(--shu)">未取得。古地図と戌の方角を調べること</span>'}<br>
+三、続けて、<b>ひとつの名のように</b>、検索窓へ。
+</div>
+${ok?`<p style="margin-top:22px;text-align:center;font-size:17px;letter-spacing:.3em">準備は できました。<br><br><b>よぶ なら、いま です。</b></p>`
+:`<p style="margin-top:22px">まだ名前が揃っていません。調査ノートのヒントを頼りに、二つの名を確定させてください。</p>`}`}});
+
+/* ---- 儀式とエンディング ---- */
+def({id:"p45",num:45,skin:"skin-dark",
+title:"█████",
+url:"saguri://█████",
+keys:["シロミカゲ","しろみかげ","白御影","シロ ミカゲ"],
+req:s=>seen("p44")&&has("know_shiro")&&has("know_mikage"),
+snippet:"——————",
+onOpen:(first)=>{ if(first){ flag("abyss"); } },
+after:(first)=>{ if(first){ showVeil('<div class="vtx">・<br><br>・&nbsp;&nbsp;・<br><br><span class="red">きこえた</span><br><br>ずっと むかしから<br>この なまえ を よぶ こえ を<br>まって いた</div>',"目をあける"); } },
+body:s=>{
+  const nm=S.playerName?esc(S.playerName):"名もなき探索者";
+  if(S.ending) return `<h1>み影社</h1><p>儀式は終わりました。あなたの選択:「${S.ending==="kaesu"?"名を返す":"わすれる"}」。</p><p>${q(S.ending==="kaesu"?"名を返す":"検索をやめる")} のページで、結末を読み返せます。${S.ending?'そういえば、まだ伝えていない言葉がひとつ、ありませんか。<b>感謝の言葉</b>を検索してみてください。':''}</p>`;
+  return `
+<h1>シロミカゲ</h1>
+<p>検索窓が、窓ではなくなります。画面の奥行きが、水の深さに変わります。</p>
+<p>白いものが、深いところから浮かんできます。犬のかたちをしています。とても大きい。とてもしずかです。あれが番犬で、御使いで、保管庫の主——<b>シロミカゲ</b>。</p>
+<p>四十三の家の、すべての名を背負ったまま、五十年あまり。だれかが正しく呼んでくれるのを待っていました。</p>
+<p style="font-family:var(--serif);font-size:17px;letter-spacing:.2em;line-height:3;text-align:center;margin:26px 0">
+『よく しらべた、<b>${nm}</b>。<br>
+えらべ。<br><br>
+あずかった 名を すべて <b>返す</b>か。<br>
+なにもかも 水に <b>わすれる</b>か。<br><br>
+どちらも まちがいでは ない』</p>
+<div class="choice-row">
+<button onclick="chooseEnd('kaesu')">名を返す</button>
+<button onclick="chooseEnd('wasureru')">わすれる</button>
+</div>
+<p style="font-size:12px;color:var(--ink-soft);margin-top:14px">※どちらを選んでも、あとで もう一方の結末も読めます。</p>`}});
+function chooseEnd(e){
+  S.ending=e; refreshPhase();
+  openPage(e==="kaesu"?"p46":"p47");
+}
+
+def({id:"p46",num:46,skin:"skin-news",
+title:"結末:名を返す",
+url:"saguri://end/return",
+keys:["名を返す","なをかえす"],
+req:s=>!!S.ending,
+snippet:"朝がくる。名簿は四十三に戻り、消えていた名前が、世界のあちこちで音を立てて帰っていく——",
+body:s=>`
+<div class="paper-h"><span class="np">中央新報</span><span class="dt">ある朝の紙面</span></div>
+<h1>湖底の村、五十年目の「帰郷」</h1>
+<p>その朝、県立公文書館の職員は名簿の頁をめくって手を止めた。<b>四十三件</b>。何度数えても、四十三件ある。二十一番目の欄には、昨日まで読めなかった姓がくっきりと——「<b>六条</b>」。</p>
+<p>郷土資料館の予約簿には「有村圭一」の名が戻り、同日、御津川ダムの湖畔で、痩せてはいるが穏やかな表情の男性が保護された。男性は自分の名をはっきりと名乗り、「<b>長い取材だった</b>」とだけ話しているという。妹に宛てた第一声は「録音、届いたか」。</p>
+<p>オカルト板の古いスレッドからは、ID:6jou6mA の書き込みがすべて消えた。かわりに最終レスにひとこと。「<b>みなさま の おかげで、ぜんぶ おかえし できました。ながらく の ごあいよう、ありがとう ございました——サグリ検索 六条」</b></p>
+<p>湖の水位がわずかに下がった夜、対岸で白い大きな犬を見た、という通報が数件あった。犬は身軽になったように山を駆け上がり、稜線で一度だけ振り返って、消えたという。</p>
+<p class="cap">この検索エンジンは、まもなく役目を終えて閉じます。……最後に、伝えたい言葉があれば、どうぞ検索窓へ。(たとえば——感謝の言葉、とか)</p>`});
+
+def({id:"p47",num:47,skin:"skin-dark",
+title:"結末:わすれる",
+url:"saguri://end/forget",
+keys:["検索をやめる","わすれる","忘れる"],
+req:s=>!!S.ending,
+snippet:"水面が閉じる。とてもしずかに。",
+body:s=>`
+<h1>わすれる</h1>
+<p>あなたは、呼んだ名を水にほどきました。</p>
+<p>白いものは、責めるでもなく、ただ深くうなずいて——四十三の名を背負ったまま、ゆっくり沈んでいきます。あれはもともと、あずかることが役目。<b>忘れられることには、慣れています。</b></p>
+<p>朝になると、あなたはこの検索エンジンの名前を思い出せません。ブックマークには見覚えのない空欄がひとつ。検索窓のプレースホルダには、点が五つ「.....」——それが何かの目に見える気がして、あなたはそっとタブを閉じます。</p>
+<p>ただ、それからときどき。雨の日の水たまりや、湯呑みの水面に、白い犬のかたちがよぎります。悪い気配ではありません。<b>番をしてくれている</b>、そんな気配です。</p>
+<p style="margin-top:24px">……これも、まちがいではない結末です。</p>
+<p style="font-size:12px;color:var(--ink-soft)">それでも最後に、水の底へ<b>感謝の言葉</b>をひとつ検索してあげると——なにかが、すこしだけ報われるかもしれません。</p>`});
+
+def({id:"p48",num:48,skin:"skin-dark",
+title:"ありがとう",
+url:"saguri://thank-you",
+keys:["ありがとう","感謝","アリガトウ"],
+req:s=>!!S.ending,
+snippet:"——",
+body:s=>{
+  const nm=S.playerName?esc(S.playerName):"あなた";
+  const order=Object.values(PAGES).filter(p=>p.num).sort((a,b)=>a.num-b.num);
+  const list=order.map(p=>(seen(p.id)?"◆ ":"◇ ")+String(p.num).padStart(2,"0")+" "+esc(p.title.split("|")[0].slice(0,22))).join("<br>");
+  return `
+<div class="credits">
+<p style="font-size:15px;letter-spacing:.5em">こちらこそ</p>
+<p class="cr-h">灰宮村 —— 検索するARG</p>
+<p style="font-size:13px">全50ページ/発見:${countVisited()}ページ<br>探索者:${nm}</p>
+<p style="font-size:13px;line-height:2.2;margin-top:18px">白い犬は、あなたのことを覚えました。<br>いつかまた、なにかを調べたくなったら——<br>暗がりに手を入れる前に、思い出してください。<br><b>名前は、帰る場所。だいじに。</b></p>
+<p class="cr-h" style="font-size:14px">発見記録</p>
+<div class="kw-index">${list}</div>
+<p style="font-size:12px;color:var(--ink-soft)">◇の残りは、まだ湖の底に。「しおり」を作ってから、右上のノート経由で探索を続けられます。<br>もう一方の結末(${q("名を返す")}/${q("検索をやめる")})も読めます。</p>
+</div>`}});
+
+/* ---- 隠しページ ---- */
+def({id:"p49",num:49,skin:"skin-dark",
+title:"よ ん だ な",
+url:"saguri://///",
+keys:[],
+snippet:"",
+body:s=>`
+<h1>よ ん だ な</h1>
+<p>三度。</p>
+<p>いいですか。名前というのは、呼ばれた回数だけ<b>薄くなる</b>のです。神さまのでも、人のでも。</p>
+<p>あなたはまだ、じぶんの名前を一度も此処で呼んでいない。それは、とても賢いことです。最初のメールの約束を、覚えていたのですね。</p>
+<p>ごほうびに、ひとつだけ。<br>——この検索エンジンには、<b>機械の入れない部屋が三つ</b>あります。行き方は、規約のいちばん深いところに。</p>
+<p style="font-size:12px;color:var(--ink-soft)">(このページは検索結果には二度と現れません。よく見つけましたね)</p>`});
+
+def({id:"p50",num:50,skin:"skin-dark",
+title:"しっている",
+url:"saguri://you",
+keys:[],
+snippet:"",
+body:s=>`
+<h1>しっている</h1>
+<p style="font-family:var(--serif);font-size:26px;letter-spacing:.3em;text-align:center;margin:26px 0;color:var(--shu)">「${esc(S.playerName)}」</p>
+<p>はい。ちゃんと おぼえて います。</p>
+<p>あなたが なんかい 検索窓に ふれたか。どの ページで ながく 立ち止まったか。どの ことばを 打ちかけて、けした か。</p>
+<p>こわがらないで。<b>おぼえて いる</b>ことと <b>喰う</b>ことは ちがう——それを たしかめる ために、あなたは ここまで 来たのでしょう?</p>
+<p>${S.ending?"儀式は もう すみました。ゆっくり して いって ください。":"つづきを どうぞ。あなたの 探しものは、もう すぐ そこです。"}</p>`});
+
+/* =========================================================
+   MILESTONES (guaranteed progression + 3-step hints)
+   ========================================================= */
+const MILESTONES=[
+{done:()=>seen("p01"),goal:"届いたメールの指示に従い、最初の言葉を検索する。",
+ hints:["メール本文に下線付きの言葉があります。","検索窓に村の名前を入れて検索。","「灰宮村」と検索してください。"]},
+{done:()=>seen("p02")&&seen("p04"),goal:"まとめ記事から「スレ」と「ダム」——ふたつの糸を手繰る。",
+ hints:["まとめ記事の中の下線語はクリックで検索できます。","「灰宮村スレ」と「御津川ダム」をそれぞれ検索。","両方のページを開けば達成です。"]},
+{done:()=>seen("p07"),goal:"村で祀られていた「あの方」の正体を、百科事典で調べる。",
+ hints:["百科事典の灰宮村の項目(「灰宮村 歴史」等)から辿れます。","信仰の名前がキーワードです。","「ヤマイヌ様」と検索。(むやみに連呼しないこと……)"]},
+{done:()=>seen("p12"),goal:"記者・有村圭一のブログを見つけ、連載を第2回まで読む。",
+ hints:["スレ1に記者の名前が出ています。","「有村圭一」→ブログ→「取材開始」→「神谷インタビュー」。","連載第2回で「みなご講」と「移転名簿」を知れば達成。"]},
+{done:()=>seen("p16"),goal:"元村長・神谷の遺した手記を読む。儀式の全体像がそこに。",
+ hints:["神谷氏のその後を調べましょう。訃報が出ています。","「神谷 訃報」→記事内の「神谷手記」。","手記に核心「犬の名+社の名」が書かれています。"]},
+{done:()=>has("know_shiro"),goal:"【名前①】昭和六年の出来事を掘り、「犬の名」を突き止める。",
+ hints:["手記いわく「犬の名は昭和六年のことを調べれば分かる」。六条家の項目も参照。","「昭和六年」→犬供養の新聞記事→「白い犬」。","犬の名は「シロ」。百科事典「白い犬」のページで確定します。"]},
+{done:()=>seen("p24"),goal:"深夜ラジオの「してはいけない検索」を、あえて実行する。",
+ hints:["スレ2にラジオ書き起こしの話題があります(「オカルトラジオ」)。","書き起こしに書かれた数字を、そのまま検索窓へ。","「4:44」と検索。……一度だけ。"]},
+{done:()=>has("g_manju"),goal:"【現実検索】妹・美咲のブログを読み、兄の下書きのパスワードを解く。",
+ hints:["有村の最後の記事のコメント欄→「兄を探しています」。パスワードは彼岸花の“別名”。","Googleなど現実の検索エンジンで「彼岸花 別名」を調べてください。仏教由来の名前です。","答えは「曼珠沙華(まんじゅしゃげ)」。「非公開下書き」のページで入力。"]},
+{done:()=>has("know_mikage"),goal:"【名前②/現実検索】古地図の方位を解き、「社の名」を突き止める。",
+ hints:["解錠した下書きに「古地図」と「戌の方角」の話が出ます。絵図を開いたら、戌が指す方位名を現実の検索エンジンで。","「戌の方角」を調べると十二支方位が分かります。北北西と間違えやすいので注意。","戌=「西北西」。サグリ検索で「西北西」と検索すると索引が開き、社の名「ミカゲ」が確定します。"]},
+{done:()=>seen("p31"),goal:"六条家に伝わる祝詞を読み、「呼ぶ順番」を確認する。",
+ hints:["索引ページ(西北西)に「祝詞」への手がかりがあります。","「祝詞」と検索。","各行の頭文字と、四・五行目が順番を教えてくれます。"]},
+{done:()=>has("g_butsu")&&seen("p33"),goal:"【現実検索】資料館デジタルアーカイブの合言葉を解き、石碑の拓本を見る。",
+ hints:["「郷土資料館」→「学芸員だより」に合言葉のヒント。六曜の知識が要ります。","現実の検索エンジンで「六曜」を。大安の対極、万事に凶の日。","合言葉は「仏滅」。入室後「石碑拓本」を検索。ついでに「写真乾板」も……。"]},
+{done:()=>seen("p37"),goal:"この検索エンジン「サグリ」そのものを調べる。",
+ hints:["4:44以降、運営情報が検索できるようになっています。","「サグリ検索」→「沿革」。","創業者の名前に注目。すべてが繋がります。"]},
+{done:()=>seen("p40")&&seen("p41")&&seen("p42"),goal:"規約の奥の robots.txt を見つけ、機械の入れない三室をすべて巡る。",
+ hints:["「プライバシーポリシー」の第6条6項。","「robots.txt」→ /inu/ /minago/ /namae/ を一つずつ検索。","三室すべてを見ると、奥(音声の解読→最後の入口)へ進めます。"]},
+{done:()=>has("g_kaere"),goal:"【現実検索】妹が公開した録音のモールス信号を解読する。",
+ hints:["「兄を探しています」の続報記事(「音声」で検索)。−と・の5文字です。","現実の検索エンジンで「モールス信号 一覧」を。K=−・− から始まります。","解読結果は「カエレ(KAERE)」。ページ内で入力を。"]},
+{done:()=>seen("p45"),goal:"「最後の入口」の作法どおり、二つの名をひとつに続けて呼ぶ。",
+ hints:["犬の名が先、社の名が後。続けて、ひとつの名のように。","「シロ」+「ミカゲ」。","検索窓に「シロミカゲ」。……覚悟がよければ。"]},
+{done:()=>!!S.ending,goal:"選ぶ。返すか、わすれるか。どちらも、まちがいではない。",
+ hints:["儀式のページでどちらかのボタンを。","選んだ後も、もう一方の結末は読めます。","選び終えたら——感謝の言葉をひとつ、検索してあげてください。"]},
+];
+
+/* ---------- veil ---------- */
+function showVeil(html,btn){
+  const v=document.getElementById("veil");
+  v.innerHTML=html+'<button onclick="document.getElementById(\'veil\').classList.remove(\'on\')">'+btn+'</button>';
+  v.classList.add("on");
+}
+
+/* ---------- init ---------- */
+(function(){
+  goHome(); updateHud(); refreshPhase();
+  const now=new Date();
+  if(now.getHours()===4&&now.getMinutes()===44){
+    setTimeout(()=>showVeil('<div class="vtx">ほんとうに<br>いま 4:44 に<br>ここに いるの ですね<br><br><span class="red">きが あうね</span></div>',"……"),1200);
+  }
+  setInterval(refreshPhase,15000);
+})();
+</script>
+</body>
+</html>
