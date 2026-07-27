@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>サグリ検索</title>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1615601076718034"
-     crossorigin="anonymous"></script>
 <style>
 :root{
   --paper:#F7F5F0; --ink:#23211C; --ink-soft:#6B675C;
@@ -35,7 +33,7 @@ body{
 }
 body[data-phase="abyss"]{overflow-x:hidden}
 ::selection{background:#2b2b2b;color:#e8e2d2}
-a,.q{color:var(--link);text-decoration:underline;cursor:pointer}
+a,.q{color:var(--link);text-decoration:underline;cursor:pointer;touch-action:manipulation}
 .q:hover{color:var(--shu)}
 
 /* ===== engine chrome ===== */
@@ -53,7 +51,7 @@ a,.q{color:var(--link);text-decoration:underline;cursor:pointer}
 #logo small{font-size:11px;letter-spacing:.3em;color:var(--ink-soft);display:block;margin-top:-4px;font-family:var(--sans)}
 body[data-haunt="1"] #logo b{animation:flick 7s infinite steps(1)}
 @keyframes flick{0%,92%{opacity:1}93%,95%{opacity:.15}96%,100%{opacity:1}}
-#searchform{flex:1;min-width:230px;display:flex;gap:0}
+#searchform{flex:1;min-width:0;display:flex;gap:0}
 #qbox{
   flex:1;border:1px solid var(--line);border-right:none;background:var(--card);
   color:var(--ink);padding:9px 14px;font-size:15px;border-radius:3px 0 0 3px;outline:none;
@@ -62,17 +60,28 @@ body[data-haunt="1"] #logo b{animation:flick 7s infinite steps(1)}
 #qbox:focus{border-color:var(--ink-soft)}
 #qbtn{
   border:1px solid var(--ink);background:var(--ink);color:var(--paper);
-  padding:9px 20px;font-size:14px;cursor:pointer;border-radius:0 3px 3px 0;letter-spacing:.15em;
+  padding:9px 20px;font-size:14px;cursor:pointer;border-radius:0 3px 3px 0;letter-spacing:.15em;touch-action:manipulation;
 }
 #qbtn:hover{background:var(--shu);border-color:var(--shu)}
 #hud{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-soft)}
 #pagecount{font-family:var(--mono);letter-spacing:.05em}
 #notebtn{
   border:1px solid var(--line);background:var(--card);color:var(--ink);
-  padding:6px 14px;border-radius:3px;cursor:pointer;font-size:13px;
+  padding:6px 14px;border-radius:3px;cursor:pointer;font-size:13px;touch-action:manipulation;
 }
 #notebtn:hover{border-color:var(--shu);color:var(--shu)}
 #notebtn.pulse{animation:pulse 1.6s ease infinite}
+#zoomresetbtn{
+  border:1px solid var(--shu);background:var(--card);color:var(--shu);
+  padding:6px 10px;border-radius:3px;cursor:pointer;font-size:12px;
+  font-family:var(--mono);letter-spacing:.08em;touch-action:manipulation;
+}
+#volbtn{
+  border:1px solid var(--line);background:var(--card);color:var(--ink-soft);
+  padding:6px 10px;border-radius:3px;cursor:pointer;font-size:12px;
+  font-family:var(--mono);min-width:52px;letter-spacing:.08em;touch-action:manipulation;
+}
+#volbtn:hover{border-color:var(--ink);color:var(--ink)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(163,53,44,0)}50%{box-shadow:0 0 0 5px rgba(163,53,44,.18)}}
 
 /* ===== main ===== */
@@ -82,7 +91,7 @@ body[data-haunt="1"] #logo b{animation:flick 7s infinite steps(1)}
 .serp-meta{font-size:12px;color:var(--ink-soft);margin-bottom:20px;border-bottom:1px dotted var(--line);padding-bottom:8px}
 .hit{margin-bottom:26px}
 .hit .t{font-size:17px;line-height:1.5}
-.hit .u{font-size:12px;color:var(--url);font-family:var(--mono);margin:2px 0}
+.hit .u{font-size:12px;color:var(--url);font-family:var(--mono);margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hit .s{font-size:13.5px;color:var(--ink-soft)}
 .hit .s em{font-style:normal;background:rgba(163,53,44,.12);padding:0 2px}
 .hit .badge{font-size:10px;border:1px solid var(--line);color:var(--ink-soft);padding:1px 6px;border-radius:2px;margin-left:6px;vertical-align:2px}
@@ -137,7 +146,7 @@ body[data-phase="deep"] .skin-bbs h1,body[data-phase="abyss"] .skin-bbs h1{backg
 .res{border-bottom:1px dotted var(--line);padding:10px 4px}
 .res .rh{color:var(--url);font-size:12px;margin-bottom:2px}
 .res .rh .nm{color:#0a6e0a;font-weight:bold}
-.res .rb{white-space:pre-wrap;line-height:1.75}
+.res .rb{white-space:pre-wrap;line-height:1.75;overflow-wrap:break-word;word-break:break-word}
 .res.warn .rb{color:var(--shu)}
 
 .skin-news{font-family:var(--serif)}
@@ -201,8 +210,8 @@ body.strain .hidden-ink{color:var(--shu-soft)}
 .gatebox{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:16px 18px;margin:18px 0}
 .gatebox .gl{font-size:12px;color:var(--ink-soft);letter-spacing:.15em;margin-bottom:8px}
 .gatebox .grow{display:flex;gap:8px}
-.gatebox input{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px;border-radius:3px;font-size:14px;outline:none}
-.gatebox button{border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:8px 18px;border-radius:3px;cursor:pointer}
+.gatebox input{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px;border-radius:3px;font-size:16px;outline:none;touch-action:manipulation}
+.gatebox button{border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:8px 18px;border-radius:3px;cursor:pointer;touch-action:manipulation}
 .gatebox button:hover{background:var(--shu);border-color:var(--shu)}
 .gatebox .wrong{color:var(--shu);font-size:12px;margin-top:8px;min-height:1em}
 .unlocked-block{border-left:3px solid var(--shu);padding:4px 0 4px 16px;margin:16px 0;animation:fadein 1.2s ease}
@@ -225,6 +234,10 @@ body.strain .hidden-ink{color:var(--shu-soft)}
 details.hint{margin-top:8px;font-size:13px}
 details.hint summary{cursor:pointer;color:var(--link);font-size:12.5px;user-select:none}
 details.hint div{background:var(--paper);border:1px dashed var(--line);border-radius:3px;padding:8px 12px;margin-top:6px}
+.hint.locked{margin-top:8px;font-size:13px;background:var(--paper);border:1px dashed var(--line);border-radius:3px;padding:10px 12px}
+.hint.locked .hintlabel{color:var(--ink-soft);font-size:12.5px;margin-bottom:8px}
+.hintunlock{border:1px solid var(--shu);background:none;color:var(--shu);padding:6px 14px;border-radius:20px;font-size:12.5px;cursor:pointer}
+.hintunlock:hover{background:var(--shu);color:var(--paper)}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line);background:var(--paper);border-radius:20px;padding:3px 12px;font-size:12.5px;cursor:pointer;transition:all .15s}
 .chip:hover{border-color:var(--shu);color:var(--shu)}
@@ -289,6 +302,23 @@ body[data-phase="abyss"] #main{animation:sway 9s ease-in-out infinite}
   .pagebody{padding:22px 18px 30px}
   .skin-wiki .infobox{float:none;width:100%;margin:0 0 14px}
   #landing .biglogo{font-size:38px}
+  /* ヘッダー: CSS Gridで確実に2行レイアウト */
+  #chrome{padding:10px 12px 8px}
+  #chrome-inner{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    grid-template-rows:auto auto;
+    column-gap:8px;row-gap:6px;
+    align-items:center;
+  }
+  #logo{grid-area:1/1/2/2;font-size:17px}
+  #logo small{display:none}
+  #hud{grid-area:1/3/2/4;gap:6px}
+  #searchform{grid-area:2/1/3/4}
+  #qbox{font-size:16px;padding:8px 10px}
+  #qbtn{padding:8px 10px;font-size:13px;letter-spacing:0}
+  #notebtn{padding:5px 8px;font-size:11px}
+  #volbtn{padding:5px 6px;font-size:11px;min-width:38px}
 }
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}
@@ -306,6 +336,8 @@ body[data-phase="abyss"] #main{animation:sway 9s ease-in-out infinite}
     </form>
     <div id="hud">
       <span id="pagecount">0/50</span>
+      <button id="zoomresetbtn" type="button" onclick="resetZoom()" style="display:none">縮小</button>
+      <button id="volbtn" type="button" onclick="cycleVolume()">音 大</button>
       <button id="notebtn" type="button" onclick="toggleNote(true)">調査ノート</button>
     </div>
   </div>
@@ -352,8 +384,151 @@ const S = {
   yamainu:0,         // ヤマイヌ様 search count
   playerName:"",
   ending:"",         // "", "kaesu", "wasureru"
-  history:[]
+  history:[],
+  hintUnlocked:{},    // hint id ("<milestoneIndex>_<hintIndex>") -> true
+  milestoneDone:[]    // milestone index -> already-fired flag (for achievement SFX)
 };
+
+/* ---------- platform detection / ads ----------
+   このHTMLはiOSアプリ(WKWebView)とPCブラウザの両方でそのまま使う。
+   広告はプラットフォームごとに出し分ける:
+   - アプリ内: ネイティブ側のAdMob(バナー/リワード)がこのWebViewの外側に表示するので、
+     このページ側では広告を一切読み込まない。
+   - ブラウザ: ENABLE_WEB_ADSENSE を true にするとAdSenseを読み込む(現在は審査未通過のためfalse)。 */
+function isNativeApp(){
+  return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.hintReward);
+}
+const ADSENSE_CLIENT_ID="ca-pub-1615601076718034";
+const ENABLE_WEB_ADSENSE=false; // AdSenseの審査が通ったら true にする
+function maybeLoadWebAds(){
+  if(!ENABLE_WEB_ADSENSE || isNativeApp()) return;
+  const s=document.createElement("script");
+  s.async=true;
+  s.src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="+ADSENSE_CLIENT_ID;
+  s.crossOrigin="anonymous";
+  document.head.appendChild(s);
+}
+
+/* ---------- audio ----------
+   BGM: 通常は under、暗く緊迫したフェーズ(deep/abyss)では behind に切り替え。
+   最後のページ(p50)は無音。実績(目標)達成時は決定ボタンSEを一度だけ鳴らす。
+   ブラウザの自動再生制限のため、実際の再生は最初のユーザー操作まで保留する。 */
+const AUDIO_BASE=isNativeApp()?"":"hainomiya-village/";
+const BGM_UNDER=new Audio(encodeURI(AUDIO_BASE+"The_Hinges_Sigh.mp3"));
+BGM_UNDER.loop=true; BGM_UNDER.preload="auto";
+const BGM_BEHIND=new Audio(encodeURI(AUDIO_BASE+"Behind_the_Paper_Screen.mp3"));
+BGM_BEHIND.loop=true; BGM_BEHIND.preload="auto";
+const SFX_ACHIEVEMENT=new Audio(encodeURI(AUDIO_BASE+"select_button.mp3"));
+SFX_ACHIEVEMENT.preload="auto";
+
+let audioStarted=false;
+function desiredBgm(){
+  if(seen("p50")) return null; // 最終ページは無音
+  const phase=document.body.dataset.phase;
+  return (phase==="deep"||phase==="abyss") ? BGM_BEHIND : BGM_UNDER;
+}
+function applyBgm(){
+  const want=desiredBgm();
+  [BGM_UNDER,BGM_BEHIND].forEach(a=>{ if(a!==want && !a.paused) a.pause(); });
+  if(want && audioStarted && want.paused){ want.play().catch(()=>{}); }
+}
+function startAudioIfNeeded(){
+  if(audioStarted) return;
+  audioStarted=true;
+  initAudioCtx();
+  resumeAudio();
+}
+["pointerdown","keydown"].forEach(evt=>document.addEventListener(evt,startAudioIfNeeded,{once:true,passive:true}));
+
+/* ---------- volume control (Web Audio API — works on iOS) ----------
+   iOSではHTMLAudioElement.volumeが変更不可のため、GainNodeで一元管理する。
+   BGM: masterGain → destination
+   SFX: sfxGain(×2) → masterGain → destination  (SFXをBGMより2倍大きく) */
+const VOL_LEVELS=[
+  {label:"音 大", gain:0.35},
+  {label:"音 小", gain:0.12},
+  {label:"音 切", gain:0.0}
+];
+let volLevel=0;
+let audioCtx=null, masterGain=null, sfxGain=null;
+function initAudioCtx(){
+  if(audioCtx) return;
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    masterGain=audioCtx.createGain();
+    masterGain.gain.value=VOL_LEVELS[volLevel].gain;
+    masterGain.connect(audioCtx.destination);
+    sfxGain=audioCtx.createGain();
+    sfxGain.gain.value=2.0;
+    sfxGain.connect(masterGain);
+    [BGM_UNDER,BGM_BEHIND].forEach(el=>{
+      try{ audioCtx.createMediaElementSource(el).connect(masterGain); }catch(e){}
+    });
+    try{ audioCtx.createMediaElementSource(SFX_ACHIEVEMENT).connect(sfxGain); }catch(e){}
+  }catch(e){}
+}
+function applyVolume(){
+  if(masterGain&&audioCtx) masterGain.gain.setValueAtTime(VOL_LEVELS[volLevel].gain, audioCtx.currentTime);
+  const btn=document.getElementById("volbtn");
+  if(btn) btn.textContent=VOL_LEVELS[volLevel].label;
+  try{ localStorage.setItem("hainomiya_vol",volLevel); }catch(e){}
+}
+function cycleVolume(){
+  volLevel=(volLevel+1)%VOL_LEVELS.length;
+  applyVolume();
+}
+function initVolume(){
+  try{
+    const saved=parseInt(localStorage.getItem("hainomiya_vol"),10);
+    if(!isNaN(saved)&&saved>=0&&saved<VOL_LEVELS.length) volLevel=saved;
+  }catch(e){}
+  const btn=document.getElementById("volbtn");
+  if(btn) btn.textContent=VOL_LEVELS[volLevel].label;
+}
+
+function resetZoom(){
+  const vp=document.querySelector('meta[name="viewport"]');
+  if(!vp) return;
+  const orig=vp.content;
+  vp.content='width=device-width, initial-scale=1, maximum-scale=1';
+  requestAnimationFrame(()=>{ vp.content=orig; });
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{
+    const btn=document.getElementById('zoomresetbtn');
+    if(btn) btn.style.display=window.visualViewport.scale>1.05?'':'none';
+  });
+}
+
+function playSfx(){
+  try{ SFX_ACHIEVEMENT.currentTime=0; SFX_ACHIEVEMENT.play().catch(()=>{}); }catch(e){}
+}
+function playAchievementSfx(){
+  if(!audioCtx){ playSfx(); return; }
+  if(audioCtx.state==="suspended"){
+    audioCtx.resume().then(playSfx);
+  }else{
+    playSfx();
+  }
+}
+/* ネイティブ画面(ダイアログ/広告)でAudioContextが停止した後の復帰。Swiftから呼ばれる */
+function resumeAudio(){
+  if(!audioCtx) return;
+  if(audioCtx.state==="suspended"){
+    audioCtx.resume().then(()=>applyBgm());
+  }else{
+    applyBgm();
+  }
+}
+/* silent=true: 目標の達成状況をSEなしで記録するだけ(セーブ読込直後など) */
+function checkMilestones(silent){
+  MILESTONES.forEach((m,i)=>{
+    if(m.done() && !S.milestoneDone[i]){
+      S.milestoneDone[i]=true;
+      if(!silent) playAchievementSfx();
+    }
+  });
+}
 
 /* ---------- utils ---------- */
 function norm(s){
@@ -405,11 +580,13 @@ function refreshPhase(){
   else if(S.playerName && Math.random()<0.25) ph.placeholder=S.playerName+"、さがして";
   else if(seen("p24")) ph.placeholder="さがして";
   else ph.placeholder="調べたい言葉を入力";
+  applyBgm();
+  checkMilestones();
 }
 
 /* ---------- save / load ---------- */
 function makeSave(){
-  const data={v:S.visited,f:S.flags,k:S.keywords,y:S.yamainu,n:S.playerName,e:S.ending};
+  const data={v:S.visited,f:S.flags,k:S.keywords,y:S.yamainu,n:S.playerName,e:S.ending,h:S.hintUnlocked};
   const code="HAINOMIYA-"+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   document.getElementById("savearea").value=code;
   document.getElementById("savearea").select();
@@ -421,13 +598,45 @@ function loadSave(){
   try{
     const data=JSON.parse(decodeURIComponent(escape(atob(raw.slice(10)))));
     S.visited=data.v||{}; S.flags=data.f||{}; S.keywords=data.k||[];
-    S.yamainu=data.y||0; S.playerName=data.n||""; S.ending=data.e||""; S.newKw={};
+    S.yamainu=data.y||0; S.playerName=data.n||""; S.ending=data.e||""; S.newKw={}; S.hintUnlocked=data.h||{};
+    S.milestoneDone=[]; checkMilestones(true); // 読み込んだ時点で達成済みの目標はSEを鳴らさず記録するだけ
     refreshPhase(); updateHud(); goHome(); toggleNote(false);
     toast("しおりから再開しました");
   }catch(e){toast("しおりを読めませんでした");}
 }
 function hardReset(){
-  if(confirm("すべての記録を消して最初からにしますか?")){location.reload();}
+  if(confirm("すべての記録を消して最初からにしますか?")){
+    if(isNativeApp()){
+      try{ window.webkit.messageHandlers.clearSave.postMessage(""); }catch(e){}
+    } else {
+      try{ localStorage.removeItem("hainomiya_save"); }catch(e){}
+    }
+    location.reload();
+  }
+}
+
+/* ---------- auto-save / auto-restore ---------- */
+function autoSave(){
+  const data={v:S.visited,f:S.flags,k:S.keywords,y:S.yamainu,n:S.playerName,e:S.ending,h:S.hintUnlocked};
+  const code="HAINOMIYA-"+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  if(isNativeApp()){
+    try{ window.webkit.messageHandlers.saveState.postMessage(code); }catch(e){}
+  } else {
+    try{ localStorage.setItem("hainomiya_save",code); }catch(e){}
+  }
+}
+/* Called by native Swift after page load with the stored save code */
+function nativeAutoRestore(code){
+  if(!code||!code.startsWith("HAINOMIYA-")) return;
+  try{
+    const data=JSON.parse(decodeURIComponent(escape(atob(code.slice(10)))));
+    if(!data.v||!Object.keys(data.v).length) return;
+    S.visited=data.v||{}; S.flags=data.f||{}; S.keywords=data.k||[];
+    S.yamainu=data.y||0; S.playerName=data.n||""; S.ending=data.e||""; S.newKw={}; S.hintUnlocked=data.h||{};
+    S.milestoneDone=[]; checkMilestones(true);
+    refreshPhase(); updateHud(); goHome("replace");
+    toast("前回の進行状況を読み込みました");
+  }catch(e){}
 }
 
 /* ---------- HUD / notebook ---------- */
@@ -443,13 +652,20 @@ function toggleNote(on){
 }
 function renderNote(){
   // goal + hints
-  const m=MILESTONES.find(m=>!m.done());
+  const mi=MILESTONES.findIndex(m=>!m.done());
+  const m=mi>=0?MILESTONES[mi]:null;
   const g=document.getElementById("note-goal");
   if(m){
     let h="";
     m.hints.forEach((hint,i)=>{
       const label=["ヒント1(方向)","ヒント2(具体的に)","ヒント3(こたえ)"][i]||("ヒント"+(i+1));
-      h+='<details class="hint"><summary>'+label+'</summary><div>'+hint+'</div></details>';
+      const hid=mi+"_"+i;
+      if(S.hintUnlocked[hid]){
+        h+='<details class="hint" open><summary>'+label+'</summary><div>'+hint+'</div></details>';
+      }else{
+        h+='<div class="hint locked"><div class="hintlabel">'+label+'</div>'+
+           '<button type="button" class="hintunlock" data-hint="'+hid+'">🎬 広告を見て解放する</button></div>';
+      }
     });
     g.innerHTML='<div class="goalbox"><div class="gt">いまの目標</div>'+m.goal+h+'</div>';
   }else{
@@ -471,15 +687,41 @@ function renderNote(){
   }).join("");
 }
 
-/* ---------- navigation ---------- */
-function goHome(){
+/* ---------- hint unlock (native app: rewarded ad / web: instant) ---------- */
+function unlockHint(hid){
+  if(S.hintUnlocked[hid]) return;
+  S.hintUnlocked[hid]=true;
+  autoSave();
+  if(document.getElementById("note").classList.contains("on")) renderNote();
+}
+document.addEventListener("click",e=>{
+  const btn=e.target.closest(".hintunlock");
+  if(!btn) return;
+  const hid=btn.dataset.hint;
+  if(isNativeApp()){
+    window.webkit.messageHandlers.hintReward.postMessage(hid);
+  }else{
+    unlockHint(hid); // web版にはネイティブのリワード広告がないためそのまま解放
+  }
+});
+
+/* ---------- navigation ----------
+   historyMode: "push" (default, user-initiated navigation) |
+   "replace" (initial load) | "none" (replaying via popstate, no history write, no side effects) */
+function goHome(historyMode){
+  historyMode = historyMode || "push";
   const m=document.getElementById("main");
   m.innerHTML=LANDING();
   window.scrollTo(0,0);
+  if(historyMode==="push") history.pushState({type:"home"},"");
+  else if(historyMode==="replace") history.replaceState({type:"home"},"");
 }
-function openPage(id){
+function openPage(id, historyMode){
+  historyMode = historyMode || "push";
   const p=PAGES[id];
   if(!p) return;
+  if(historyMode==="push") history.pushState({type:"page",id:id},"");
+  else if(historyMode==="replace") history.replaceState({type:"page",id:id},"");
   const first=!S.visited[id];
   S.visited[id]=true;
   if(p.onOpen) p.onOpen(first);
@@ -490,16 +732,19 @@ function openPage(id){
     '<div class="backrow"><span class="q" data-q="__back">← 検索結果にもどる</span><span class="pagenum">記録 No.'+String(p.num).padStart(2,"0")+' / '+TOTAL+'</span></div>';
   window.scrollTo(0,0);
   if(first){
+    playAchievementSfx();
     toast("ページを発見 ("+countVisited()+"/"+TOTAL+")");
     (p.gives||[]).forEach(addKw);
   }
   updateHud(); refreshPhase();
   if(p.after) p.after(first);
+  autoSave();
 }
 
 /* ---------- search ---------- */
 let lastQuery="";
-function doSearch(qstr){
+function doSearch(qstr, historyMode){
+  historyMode = historyMode || "push";
   const box=document.getElementById("qbox");
   const raw = (typeof qstr==="string") ? qstr : box.value;
   const nq=norm(raw);
@@ -507,15 +752,21 @@ function doSearch(qstr){
   box.value=raw;
   lastQuery=raw;
 
-  /* special interceptors */
-  if(["ヤマイヌサマ","山狗様","やまいぬさま","ヤマイヌ様"].map(norm).includes(nq)){
-    S.yamainu++;
-    if(S.yamainu===3 && seen("p07") && !seen("p49")){ openPage("p49"); return false; }
-    if(S.yamainu>3 && seen("p49") && !S.ending){ toast("……もう、よぶな。"); }
-  }
-  if(S.playerName && nq===norm(S.playerName) && seen("p42")){ openPage("p50"); return false; }
-  if(nq===norm("開発室")||nq===norm("かいはつしつ")||nq==="developer"){ 
-    toast("開発室:このゲームはあなたのために作られました。良い旅を。"); 
+  if(historyMode==="push") history.pushState({type:"search",q:raw},"");
+  else if(historyMode==="replace") history.replaceState({type:"search",q:raw},"");
+
+  /* special interceptors (skipped when replaying history: no double side-effects) */
+  if(historyMode!=="none"){
+    if(["ヤマイヌサマ","山狗様","やまいぬさま","ヤマイヌ様"].map(norm).includes(nq)){
+      S.yamainu++;
+      autoSave();
+      if(S.yamainu===3 && seen("p07") && !seen("p49")){ openPage("p49"); return false; }
+      if(S.yamainu>3 && seen("p49") && !S.ending){ toast("……もう、よぶな。"); }
+    }
+    if(S.playerName && nq===norm(S.playerName) && seen("p42")){ openPage("p50"); return false; }
+    if(nq===norm("開発室")||nq===norm("かいはつしつ")||nq==="developer"){
+      toast("開発室:このゲームはあなたのために作られました。良い旅を。");
+    }
   }
 
   /* collect hits */
@@ -563,7 +814,7 @@ document.addEventListener("click",e=>{
   const el=e.target.closest("[data-q]");
   if(!el) return;
   const v=el.dataset.q;
-  if(v==="__back"){ if(lastQuery) doSearch(lastQuery); else goHome(); return; }
+  if(v==="__back"){ history.back(); return; }
   if(v.startsWith("__open:")){ openPage(v.slice(7)); return; }
   delete S.newKw[v];
   toggleNote(false);
@@ -591,11 +842,20 @@ document.addEventListener("click",async e=>{
     toast(G.toast||"解錠しました");
     if(G.gives) G.gives.forEach(addKw);
     if(G.reopen) openPage(G.reopen);
+    autoSave();
   }else{
     msg.textContent=G.wrongMsg||"……違うようです。";
     input.value="";
     input.focus();
   }
+});
+
+/* ---------- browser/OS back-forward support ---------- */
+window.addEventListener("popstate",e=>{
+  const st=e.state;
+  if(!st||st.type==="home"){ goHome("none"); return; }
+  if(st.type==="search"){ doSearch(st.q,"none"); return; }
+  if(st.type==="page"){ openPage(st.id,"none"); return; }
 });
 
 const GATES={
@@ -1087,7 +1347,7 @@ body:s=>`
 <div class="blogmeta">2007/04/02</div>
 <p>兄・有村圭一を探しています。どんな小さな情報でも構いません。</p>
 <p>兄のパソコンに、ブログの${q("非公開下書き")}が残っていました。パスワードがかかっています。心当たりはひとつだけ。兄は毎年秋、川辺を真っ赤に染める<b>彼岸花</b>を撮りに行っていました。「この花には別の名前があって、そっちのほうが好きだ」と言っていたのを覚えています。</p>
-<p>その「<b>彼岸花の別名</b>」がパスワードだと思うのですが、私はどうしても思い出せません。<b>お手元の検索エンジンで調べられる方</b>、どうか下書きのページで試してみてください。</p>
+<p>それがパスワードだと思うのですが、私はどうしても思い出せません。</p>
 <p>それと、警察から返してもらったボイスレコーダーの${q("音声")}を書き起こして公開する準備をしています。規則的なピッ、ピーという音。兄は学生時代、無線部でした。</p>`});
 
 def({id:"p28",num:28,skin:"skin-broken",
@@ -1104,7 +1364,7 @@ body:s=>{
 <div class="gatebox"><div class="gl">PASSWORD — 兄が好きだった、彼岸花の「別名」</div>
 <div class="grow"><input type="text" placeholder="ひらがな/カタカナ/漢字いずれも可"><button data-gate="pass28">開く</button></div>
 <div class="wrong"></div></div>
-<p style="font-size:12px;color:var(--ink-soft)">ヒント:この答えはサグリ検索の中にはありません。<b>現実の検索エンジン</b>で「彼岸花 別名」を調べてください。仏教の経典に由来する、赤い花の名です。</p>`;
+`;
   return `
 <h1>【非公開】村は移転していない</h1>
 <p>公開する勇気が出ない。だがいつか誰かが読む前提で書く。</p>
@@ -1140,7 +1400,7 @@ body:s=>`
   <span class="shrine" style="left:21%;top:24%">⛩ 社「み影」</span>
   <span class="legend">十二支方位環:上=北。社の印は中心から見て「戌」の位置。</span>
 </div>
-<p>社の印の脇に、掠れた文字で「<b>み影</b>」。三文字目は判読不能。読みを確定するには、<b>戌の方角が示す方位名</b>(現実の検索エンジンで「戌の方角」を調べれば分かります)を、このサグリ検索で検索してください。方位名そのものが、収蔵庫の索引語になっています。</p>`});
+<p>社の印の脇に、掠れた文字で「<b>み影</b>」。三文字目は判読不能。読みを確定するには、<b>戌の方角が示す方位名</b>を、このサグリ検索で検索してください。</p>`});
 
 def({id:"p30",num:30,skin:"skin-2000s",
 title:"索引:西北西の社「み影社」|県立公文書館デジタル収蔵庫",
@@ -1178,22 +1438,21 @@ body:s=>`
 <p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">え</b>にしの いぬの なを さきに</p>
 <p><b class="acro" onclick="this.style.color='var(--shu)'" style="cursor:pointer;font-size:24px">せ</b>なかの やしろの なを あとに</p>
 </div>
-<p style="margin-top:24px">五つの行頭 ——「<b>な・を・か・え・せ</b>」。</p>
-<p>そして四行目と五行目は、呼ぶ<b>順番</b>を告げています。<b>犬の名を先に、社の名を後に。</b></p>`});
+<p style="margin-top:24px">五つの行頭 ——「<b>な・を・か・え・せ</b>」。</p>`});
 
 def({id:"p32",num:32,skin:"skin-gov",
 title:"デジタルアーカイブ入口|御津川町郷土資料館",
 url:"http://www.mitsukawa-museum.example/digital/",
 keys:["デジタルアーカイブ","拓本","乾板"],
 req:s=>seen("p19")||seen("p05")||seen("p13"),
-snippet:"石碑拓本・写真乾板の閲覧入口。合言葉を入力してください(ヒントは学芸員だよりへ)。",
+snippet:"石碑拓本・写真乾板の閲覧入口。合言葉を入力してください。",
 body:s=>{
   if(!has("g_butsu")) return `
 <h1>デジタルアーカイブ 認証</h1>
 <div class="gatebox"><div class="gl">合言葉 — 六曜のうち、万事に凶とされる日</div>
 <div class="grow"><input type="text" placeholder="漢字またはひらがな"><button data-gate="butsumetsu">入室</button></div>
 <div class="wrong"></div></div>
-<p style="font-size:12px;color:var(--ink-soft)">分からない場合:${q("学芸員だより")}を読むか、<b>現実の検索エンジン</b>で「六曜」を調べてください。大安の反対にあたる日です。</p>`;
+`;
   return `
 <h1>デジタルアーカイブ 認証</h1>
 <p><span class="stamp">認証済</span> ようこそ。収蔵資料は次の索引語で閲覧できます。</p>
@@ -1413,7 +1672,8 @@ ${done?`<div class="unlocked-block"><p><b>解読済:K A E R E ——「カエレ
 :`<div class="gatebox"><div class="gl">解読結果を入力(カタカナ/ひらがな/ローマ字)</div>
 <div class="grow"><input type="text" placeholder="5文字の言葉"><button data-gate="kaere">解読</button></div>
 <div class="wrong"></div></div>
-<p style="font-size:12px;color:var(--ink-soft)">ヒント:この対応表はサグリ検索にはありません。<b>現実の検索エンジン</b>で「モールス信号 一覧」を調べて、1文字ずつ照合してください。</p>`}`}});
+`}
+`}});
 
 def({id:"p44",num:44,skin:"skin-dark",
 title:"最後の入口",
@@ -1587,14 +1847,46 @@ const MILESTONES=[
 
 /* ---------- veil ---------- */
 function showVeil(html,btn){
+  // 黒画面表示時: BGMを即停止
+  if(masterGain) masterGain.gain.value=0;
+  [BGM_UNDER,BGM_BEHIND].forEach(a=>{ if(!a.paused) a.pause(); });
   const v=document.getElementById("veil");
-  v.innerHTML=html+'<button onclick="document.getElementById(\'veil\').classList.remove(\'on\')">'+btn+'</button>';
+  v.innerHTML=html+'<button onclick="closeVeil()">'+btn+'</button>';
   v.classList.add("on");
+}
+function closeVeil(){
+  document.getElementById("veil").classList.remove("on");
+  // 黒画面を閉じた後: BGMをフェードインで再開
+  applyBgm();
+  if(masterGain&&audioCtx){
+    const target=VOL_LEVELS[volLevel].gain;
+    const now=audioCtx.currentTime;
+    masterGain.gain.cancelScheduledValues(now);
+    masterGain.gain.setValueAtTime(0,now);
+    masterGain.gain.linearRampToValueAtTime(target,now+1.5);
+  }
 }
 
 /* ---------- init ---------- */
 (function(){
-  goHome(); updateHud(); refreshPhase();
+  maybeLoadWebAds();
+  checkMilestones(true);
+  // ブラウザ版: localStorageから自動復元
+  if(!isNativeApp()){
+    try{
+      const code=localStorage.getItem("hainomiya_save");
+      if(code&&code.startsWith("HAINOMIYA-")){
+        const data=JSON.parse(decodeURIComponent(escape(atob(code.slice(10)))));
+        if(data.v&&Object.keys(data.v).length>0){
+          S.visited=data.v||{}; S.flags=data.f||{}; S.keywords=data.k||[];
+          S.yamainu=data.y||0; S.playerName=data.n||""; S.ending=data.e||""; S.newKw={}; S.hintUnlocked=data.h||{};
+          S.milestoneDone=[]; checkMilestones(true);
+        }
+      }
+    }catch(e){}
+  }
+  initVolume();
+  goHome("replace"); updateHud(); refreshPhase();
   const now=new Date();
   if(now.getHours()===4&&now.getMinutes()===44){
     setTimeout(()=>showVeil('<div class="vtx">ほんとうに<br>いま 4:44 に<br>ここに いるの ですね<br><br><span class="red">きが あうね</span></div>',"……"),1200);
