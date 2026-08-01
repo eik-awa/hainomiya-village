@@ -19,8 +19,10 @@ struct hainomiya_villageApp: App {
         WindowGroup {
             ContentView()
                 .onAppear {
-                    if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
-                        ATTrackingManager.requestTrackingAuthorization { _ in }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+                            ATTrackingManager.requestTrackingAuthorization { _ in }
+                        }
                     }
                 }
         }

@@ -4,5 +4,7 @@
 <dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-1615601076718034~3374712720</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>広告をより適切に表示するために、トラッキングの許可をお願いします。</string>
 </dict>
 </plist>
