@@ -387,9 +387,9 @@ console.log("%cみている", "color:#8e2b2b;font-size:28px;font-family:serif;le
 console.log("%c……ここまで覗きに来たあなたへ。『開発室』と検索してみてください。", "color:#888");
 
 /* ---------- debug device badge ----------
-   debug-config.js (git管理外)に登録した端末(identifierForVendor)でだけ
-   右下に目印のバッジを表示する。AdMobのテスト広告モード自体はSwift側
-   (identifierForVendorを直接比較)で切り替えており、ここは目視確認用。 */
+   debug-config.js (git管理外)に登録した端末(Keychainに永続保存したUUID)でだけ
+   右下に目印のバッジを表示する。バナー広告の非表示・リワード広告のスキップ自体は
+   Swift側(DebugDeviceConfig.isDebugDevice)で切り替えており、ここは目視確認用。 */
 const _debugCfg = window.__DEBUG_CONFIG__;
 const _vendorIds = (_debugCfg && _debugCfg.VENDOR_IDS) || [];
 let _resolveIsDebugDevice;

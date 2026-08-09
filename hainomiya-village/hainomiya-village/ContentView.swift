@@ -7,8 +7,6 @@
 
 import SwiftUI
 import WebKit
-import AdSupport
-import AppTrackingTransparency
 
 struct ContentView: View {
     var body: some View {
@@ -110,9 +108,7 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
         case "clearSave":
             UserDefaults.standard.removeObject(forKey: Self.saveKey)
         case "deviceInfo":
-            let identifier = ATTrackingManager.trackingAuthorizationStatus == .authorized
-                ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
-                : (UIDevice.current.identifierForVendor?.uuidString ?? "")
+            let identifier = DebugDeviceConfig.persistentDeviceID
             let js = "window.__initDebugBadge__ && window.__initDebugBadge__('\(identifier)')"
             webView.evaluateJavaScript(js, completionHandler: nil)
         case "hintReward":

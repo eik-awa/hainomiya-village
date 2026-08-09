@@ -1,7 +1,0 @@
-// デバッグ端末設定ファイル
-window.__DEBUG_CONFIG__ = {
-  VENDOR_IDS: [
-    '7F77F364-4FC8-4A46-B0A6-FFFB5976AEC4',
-    'B11E9100-C9F2-4607-AAA8-881012976522',
-  ],
-};

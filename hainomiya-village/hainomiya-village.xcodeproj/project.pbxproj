@@ -290,6 +290,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "灰宮村";
 				INFOPLIST_KEY_GADApplicationIdentifier = "ca-app-pub-1615601076718034~3374712720";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "この識別子は、より関連性の高い広告を表示するために使用されます。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -328,6 +329,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "灰宮村";
 				INFOPLIST_KEY_GADApplicationIdentifier = "ca-app-pub-1615601076718034~3374712720";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "この識別子は、より関連性の高い広告を表示するために使用されます。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
