@@ -7,14 +7,18 @@
 
 import SwiftUI
 import WebKit
+import AdSupport
+import AppTrackingTransparency
 
 struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             WebView(url: Bundle.main.url(forResource: "index", withExtension: "html"))
                 .ignoresSafeArea(edges: [.top, .horizontal])
-            BannerAdView(adUnitID: AdMobConfig.bannerAdUnitID)
-                .frame(height: 50)
+            if !DebugDeviceConfig.isDebugDevice {
+                BannerAdView(adUnitID: AdMobConfig.bannerAdUnitID)
+                    .frame(height: 50)
+            }
         }
         .ignoresSafeArea(edges: .top)
     }
@@ -53,6 +57,7 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
         contentController.add(self, name: "hintReward")
         contentController.add(self, name: "saveState")
         contentController.add(self, name: "clearSave")
+        contentController.add(self, name: "deviceInfo")
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
         config.mediaTypesRequiringUserActionForPlayback = []
@@ -104,15 +109,24 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
             }
         case "clearSave":
             UserDefaults.standard.removeObject(forKey: Self.saveKey)
+        case "deviceInfo":
+            let identifier = ATTrackingManager.trackingAuthorizationStatus == .authorized
+                ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
+                : (UIDevice.current.identifierForVendor?.uuidString ?? "")
+            let js = "window.__initDebugBadge__ && window.__initDebugBadge__('\(identifier)')"
+            webView.evaluateJavaScript(js, completionHandler: nil)
         case "hintReward":
             guard let hintID = message.body as? String else { return }
+            let safeID = hintID.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "'", with: "\\'")
+            if DebugDeviceConfig.isDebugDevice {
+                webView.evaluateJavaScript("unlockHint('\(safeID)')")
+                return
+            }
             RewardedAdManager.shared.show(from: self) { [weak self] earned in
                 guard let self else { return }
-                // 広告終了後は常にAudioContextを復帰させる
                 self.webView.evaluateJavaScript("resumeAudio()")
                 guard earned else { return }
-                let safeID = hintID.replacingOccurrences(of: "\\", with: "\\\\")
-                    .replacingOccurrences(of: "'", with: "\\'")
                 self.webView.evaluateJavaScript("unlockHint('\(safeID)')")
             }
         default:

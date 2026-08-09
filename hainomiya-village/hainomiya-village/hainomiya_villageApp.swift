@@ -8,11 +8,17 @@
 import SwiftUI
 import GoogleMobileAds
 import AppTrackingTransparency
+import AdSupport
 
 @main
 struct hainomiya_villageApp: App {
     init() {
         GADMobileAds.sharedInstance().start(completionHandler: nil)
+
+        let identifier = ATTrackingManager.trackingAuthorizationStatus == .authorized
+            ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
+            : (UIDevice.current.identifierForVendor?.uuidString ?? "")
+        print("[DebugBadge] Identifier: \(identifier)")
     }
 
     var body: some Scene {

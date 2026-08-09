@@ -323,6 +323,14 @@ body[data-phase="abyss"] #main{animation:sway 9s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}
 }
+
+/* デバッグ端末バッジ(登録済みの自分の端末でのみ表示。テスト広告モードの目印) */
+#debug-badge{
+  display:none;
+  position:fixed;right:20px;bottom:20px;z-index:9999;
+  width:4px;height:4px;pointer-events:none;
+  background:#A3352C;opacity:.55;transform:rotate(45deg);
+}
 </style>
 </head>
 <body data-phase="day">
@@ -367,7 +375,9 @@ body[data-phase="abyss"] #main{animation:sway 9s ease-in-out infinite}
 </aside>
 
 <div id="veil"></div>
+<div id="debug-badge"></div>
 
+<script src="debug-config.js" onerror="void 0"></script>
 <script>
 "use strict";
 /* =========================================================
@@ -375,6 +385,32 @@ body[data-phase="abyss"] #main{animation:sway 9s ease-in-out infinite}
    ========================================================= */
 console.log("%cみている", "color:#8e2b2b;font-size:28px;font-family:serif;letter-spacing:.5em");
 console.log("%c……ここまで覗きに来たあなたへ。『開発室』と検索してみてください。", "color:#888");
+
+/* ---------- debug device badge ----------
+   debug-config.js (git管理外)に登録した端末(identifierForVendor)でだけ
+   右下に目印のバッジを表示する。AdMobのテスト広告モード自体はSwift側
+   (identifierForVendorを直接比較)で切り替えており、ここは目視確認用。 */
+const _debugCfg = window.__DEBUG_CONFIG__;
+const _vendorIds = (_debugCfg && _debugCfg.VENDOR_IDS) || [];
+let _resolveIsDebugDevice;
+const _isDebugDevicePromise = new Promise(resolve=>{
+  _resolveIsDebugDevice = resolve;
+  setTimeout(()=>resolve(false), 1500); // ネイティブからの応答がない場合の安全弁
+});
+window.__initDebugBadge__ = function(vendorId){
+  const isDebug = _vendorIds.includes(vendorId);
+  if(isDebug){
+    const b=document.getElementById("debug-badge");
+    if(b) b.style.display="block";
+    console.log("[Debug] デバッグモード有効 — AdMob テストモード");
+  }
+  _resolveIsDebugDevice(isDebug);
+};
+try{
+  window.webkit.messageHandlers.deviceInfo.postMessage({});
+}catch(e){
+  _resolveIsDebugDevice(false); // ネイティブ環境外(ブラウザ等)
+}
 
 const S = {
   visited:{},        // page id -> true
@@ -389,24 +425,12 @@ const S = {
   milestoneDone:[]    // milestone index -> already-fired flag (for achievement SFX)
 };
 
-/* ---------- platform detection / ads ----------
+/* ---------- platform detection ----------
    このHTMLはiOSアプリ(WKWebView)とPCブラウザの両方でそのまま使う。
-   広告はプラットフォームごとに出し分ける:
-   - アプリ内: ネイティブ側のAdMob(バナー/リワード)がこのWebViewの外側に表示するので、
-     このページ側では広告を一切読み込まない。
-   - ブラウザ: ENABLE_WEB_ADSENSE を true にするとAdSenseを読み込む(現在は審査未通過のためfalse)。 */
+   広告はネイティブ側のAdMob(バナー/リワード)がこのWebViewの外側に表示するので、
+   このページ側では広告を読み込まない。 */
 function isNativeApp(){
   return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.hintReward);
-}
-const ADSENSE_CLIENT_ID="ca-pub-1615601076718034";
-const ENABLE_WEB_ADSENSE=false; // AdSenseの審査が通ったら true にする
-function maybeLoadWebAds(){
-  if(!ENABLE_WEB_ADSENSE || isNativeApp()) return;
-  const s=document.createElement("script");
-  s.async=true;
-  s.src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="+ADSENSE_CLIENT_ID;
-  s.crossOrigin="anonymous";
-  document.head.appendChild(s);
 }
 
 /* ---------- audio ----------
@@ -1869,7 +1893,6 @@ function closeVeil(){
 
 /* ---------- init ---------- */
 (function(){
-  maybeLoadWebAds();
   checkMilestones(true);
   // ブラウザ版: localStorageから自動復元
   if(!isNativeApp()){

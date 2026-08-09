@@ -9,11 +9,13 @@
 /* Begin PBXBuildFile section */
 		C2B6FA823015939200413053 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = C2B6FA813015939200413053 /* index.html */; };
 		C2B6FA863015939200413053 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = C2B6FA853015939200413053 /* GoogleMobileAds */; };
+		C2B6FA913015939200413053 /* debug-config.js in Resources */ = {isa = PBXBuildFile; fileRef = C2B6FA903015939200413053 /* debug-config.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		C2B6FA733015939100413053 /* hainomiya-village.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hainomiya-village.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2B6FA813015939200413053 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../index.html; sourceTree = "<group>"; };
+		C2B6FA903015939200413053 /* debug-config.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "debug-config.js"; path = "../debug-config.js"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -54,6 +56,7 @@
 			children = (
 				C2B6FA753015939100413053 /* hainomiya-village */,
 				C2B6FA813015939200413053 /* index.html */,
+				C2B6FA903015939200413053 /* debug-config.js */,
 				C2B6FA743015939100413053 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -135,6 +138,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C2B6FA823015939200413053 /* index.html in Resources */,
+				C2B6FA913015939200413053 /* debug-config.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,11 +282,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7PU4G736RJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "hainomiya-village/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "灰宮村";
 				INFOPLIST_KEY_GADApplicationIdentifier = "ca-app-pub-1615601076718034~3374712720";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "この識別子は、より関連性の高い広告を表示するために使用されます。";
@@ -291,11 +296,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "eik-awa.hainomiya-village";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -314,11 +320,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7PU4G736RJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "hainomiya-village/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "灰宮村";
 				INFOPLIST_KEY_GADApplicationIdentifier = "ca-app-pub-1615601076718034~3374712720";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "この識別子は、より関連性の高い広告を表示するために使用されます。";
@@ -327,11 +334,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "eik-awa.hainomiya-village";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
