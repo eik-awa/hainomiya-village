@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		51BABB79DA020BA9BE6542A0 /* UnityMediationSDK in Frameworks */ = {isa = PBXBuildFile; productRef = A354E40F8F9D3854B8FF55B5 /* UnityMediationSDK */; };
 		C2B6FA823015939200413053 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = C2B6FA813015939200413053 /* index.html */; };
-		C2B6FA863015939200413053 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = C2B6FA853015939200413053 /* GoogleMobileAds */; };
 		C2B6FA913015939200413053 /* debug-config.js in Resources */ = {isa = PBXBuildFile; fileRef = C2B6FA903015939200413053 /* debug-config.js */; };
 /* End PBXBuildFile section */
 
@@ -44,7 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C2B6FA863015939200413053 /* GoogleMobileAds in Frameworks */,
+				51BABB79DA020BA9BE6542A0 /* UnityMediationSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -89,7 +89,7 @@
 			);
 			name = "hainomiya-village";
 			packageProductDependencies = (
-				C2B6FA853015939200413053 /* GoogleMobileAds */,
+				A354E40F8F9D3854B8FF55B5 /* UnityMediationSDK */,
 			);
 			productName = "hainomiya-village";
 			productReference = C2B6FA733015939100413053 /* hainomiya-village.app */;
@@ -120,7 +120,7 @@
 			mainGroup = C2B6FA6A3015939100413053;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				C2B6FA843015939200413053 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				BBFBED7F4D4C3644DF10D72B /* XCRemoteSwiftPackageReference "LevelPlay-Swift-Package" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C2B6FA743015939100413053 /* Products */;
@@ -282,13 +282,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 7PU4G736RJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "hainomiya-village/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "灰宮村";
-				INFOPLIST_KEY_GADApplicationIdentifier = "ca-app-pub-1615601076718034~3374712720";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "この識別子は、より関連性の高い広告を表示するために使用されます。";
@@ -302,7 +301,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
+				OTHER_LDFLAGS = "";
+				"OTHER_LDFLAGS[arch=*]" = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = "eik-awa.hainomiya-village";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -321,13 +322,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 7PU4G736RJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "hainomiya-village/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "灰宮村";
-				INFOPLIST_KEY_GADApplicationIdentifier = "ca-app-pub-1615601076718034~3374712720";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "この識別子は、より関連性の高い広告を表示するために使用されます。";
@@ -341,7 +341,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
+				OTHER_LDFLAGS = "";
+				"OTHER_LDFLAGS[arch=*]" = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = "eik-awa.hainomiya-village";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -378,21 +380,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C2B6FA843015939200413053 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+		BBFBED7F4D4C3644DF10D72B /* XCRemoteSwiftPackageReference "LevelPlay-Swift-Package" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			repositoryURL = "https://github.com/ironsource-mobile/LevelPlay-Swift-Package";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 11.0.0;
+				minimumVersion = 9.3.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C2B6FA853015939200413053 /* GoogleMobileAds */ = {
+		A354E40F8F9D3854B8FF55B5 /* UnityMediationSDK */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C2B6FA843015939200413053 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
+			package = BBFBED7F4D4C3644DF10D72B /* XCRemoteSwiftPackageReference "LevelPlay-Swift-Package" */;
+			productName = UnityMediationSDK;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

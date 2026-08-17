@@ -6,13 +6,12 @@
 //
 
 import SwiftUI
-import GoogleMobileAds
 import AppTrackingTransparency
 
 @main
 struct hainomiya_villageApp: App {
     init() {
-        GADMobileAds.sharedInstance().start(completionHandler: nil)
+        LevelPlayAdsController.shared.initialize()
         print("[DebugBadge] Identifier: \(DebugDeviceConfig.persistentDeviceID)")
     }
 
