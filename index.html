@@ -236,6 +236,8 @@ details.hint summary{cursor:pointer;color:var(--link);font-size:12.5px;user-sele
 details.hint div{background:var(--paper);border:1px dashed var(--line);border-radius:3px;padding:8px 12px;margin-top:6px}
 .hint.locked{margin-top:8px;font-size:13px;background:var(--paper);border:1px dashed var(--line);border-radius:3px;padding:10px 12px}
 .hint.locked .hintlabel{color:var(--ink-soft);font-size:12.5px;margin-bottom:8px}
+.mrec-slot{width:300px;height:250px;margin:28px auto 0}
+.adstatus{margin-top:8px;font-size:12px;color:var(--ink-soft)}
 .hintunlock{border:1px solid var(--shu);background:none;color:var(--shu);padding:6px 14px;border-radius:20px;font-size:12.5px;cursor:pointer}
 .hintunlock:hover{background:var(--shu);color:var(--paper)}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
@@ -254,9 +256,17 @@ details.hint div{background:var(--paper);border:1px dashed var(--line);border-ra
 .progressbar i{display:block;height:100%;background:var(--shu);transition:width .6s ease}
 
 /* 444 overlay + abyss */
-#veil{position:fixed;inset:0;background:#000;z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+/* 画面が低い端末(ネイティブのバナー広告の分だけWebViewが縮む)でも、ボタンが切れずに押せるようスクロール可能にする。
+   justify-content:center だとはみ出し時に上下が切れるので、先頭/末尾の auto マージンで中央寄せする。 */
+#veil{position:fixed;inset:0;background:#000;z-index:200;display:none;align-items:center;flex-direction:column;text-align:center;padding:24px 24px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #veil.on{display:flex}
+#veil>:first-child{margin-top:auto}
+#veil>button:last-child{margin-bottom:auto;flex-shrink:0}
 #veil .vtx{font-family:var(--serif);color:#b8b2a0;font-size:20px;letter-spacing:.4em;line-height:3;animation:fadein 3s ease}
+@media (max-height:700px){
+  #veil .vtx{font-size:17px;line-height:2.4}
+  #veil.on button{margin-top:24px}
+}
 #veil .vtx .red{color:#8e2b2b}
 #veil button{margin-top:40px;background:none;border:1px solid #3a3a3a;color:#8a8578;padding:10px 30px;letter-spacing:.3em;cursor:pointer;font-family:var(--serif)}
 #veil button:hover{border-color:#8e2b2b;color:#c98a83}
@@ -646,17 +656,19 @@ function renderNote(){
   const m=mi>=0?MILESTONES[mi]:null;
   const g=document.getElementById("note-goal");
   if(m){
-    let h="";
+    let h="", anyLocked=false;
     m.hints.forEach((hint,i)=>{
       const label=["ヒント1(方向)","ヒント2(具体的に)","ヒント3(こたえ)"][i]||("ヒント"+(i+1));
       const hid=mi+"_"+i;
       if(S.hintUnlocked[hid]){
         h+='<details class="hint" open><summary>'+label+'</summary><div>'+hint+'</div></details>';
       }else{
+        anyLocked=true;
         h+='<div class="hint locked"><div class="hintlabel">'+label+'</div>'+
            '<button type="button" class="hintunlock" data-hint="'+hid+'">🎬 広告を見て解放する</button></div>';
       }
     });
+    if(anyLocked) h+=adStatusHtml();
     g.innerHTML='<div class="goalbox"><div class="gt">いまの目標</div>'+m.goal+h+'</div>';
   }else{
     g.innerHTML='<div class="goalbox"><div class="gt">調査完了</div>すべての目標を達成しました。未発見のページを探すのもいいでしょう。</div>';
@@ -677,7 +689,66 @@ function renderNote(){
   }).join("");
 }
 
-/* ---------- hint unlock (instant, no ad) ---------- */
+/* ---------- inline ad slot (検索結果ページの大きめバナー) ----------
+   アプリでは、ここに空き枠(#mrec-slot)だけ置き、位置をネイティブへ伝えて広告を重ねてもらう。
+   ノートや黒画面が開いている間、拡大表示中、没入感を保ちたい最終フェーズでは枠ごと隠す。 */
+function adSlotHtml(){
+  if(!isNativeApp()||!window.webkit.messageHandlers.adSlot) return "";
+  if(document.body.dataset.phase==="abyss") return "";
+  return '<div id="mrec-slot" class="mrec-slot"></div>';
+}
+let adSlotTimer=0;
+function syncAdSlot(){
+  clearTimeout(adSlotTimer);
+  adSlotTimer=setTimeout(()=>{
+    if(!isNativeApp()||!window.webkit.messageHandlers.adSlot) return;
+    const el=document.getElementById("mrec-slot");
+    const blocked=document.getElementById("note").classList.contains("on")
+      || document.getElementById("veil").classList.contains("on")
+      || (window.visualViewport && window.visualViewport.scale>1.05);
+    if(!el||blocked){ window.webkit.messageHandlers.adSlot.postMessage({visible:false}); return; }
+    const r=el.getBoundingClientRect();
+    window.webkit.messageHandlers.adSlot.postMessage({visible:true,x:r.left+window.scrollX,y:r.top+window.scrollY,w:r.width,h:r.height});
+  },30);
+}
+(function(){
+  if(!window.MutationObserver) return;
+  const mo=new MutationObserver(syncAdSlot);
+  mo.observe(document.getElementById("main"),{childList:true,subtree:true});
+  ["note","veil"].forEach(id=>mo.observe(document.getElementById(id),{attributes:true,attributeFilter:["class"]}));
+  window.addEventListener("resize",syncAdSlot);
+  if(window.visualViewport) window.visualViewport.addEventListener("resize",syncAdSlot);
+})();
+
+/* ---------- App Store review prompt ----------
+   最後のページ(ありがとう)を読み終えた余韻のあとに、ネイティブ側へレビュー依頼を頼む。
+   表示するかどうかはiOS側が決める(年間回数の上限あり)。ブラウザでは何もしない。 */
+function requestAppReview(){
+  if(!isNativeApp()||!window.webkit.messageHandlers.requestReview) return;
+  setTimeout(()=>window.webkit.messageHandlers.requestReview.postMessage("ending"),3000);
+}
+
+/* ---------- hint unlock (rewarded ad in the app / instant in the browser) ----------
+   広告の回数制限(1日10回・3回ごとに3時間)の判定はネイティブ側。ここは表示用の状態だけ持つ。 */
+const AD={remaining:null,until:0};
+function setAdStatus(remaining,until){
+  AD.remaining=remaining; AD.until=until;
+  if(document.getElementById("note").classList.contains("on")) renderNote();
+}
+function adStatusHtml(){
+  if(!isNativeApp()||AD.remaining===null) return "";
+  let t;
+  if(AD.remaining<=0){
+    t="本日の広告視聴は上限に達しました。明日またお試しください。";
+  }else{
+    t="本日あと"+AD.remaining+"回(3回ごとに3時間のインターバル)";
+    if(AD.until>Date.now()){
+      const d=new Date(AD.until);
+      t+="<br>次は "+d.getHours()+":"+String(d.getMinutes()).padStart(2,"0")+" 以降に視聴できます。";
+    }
+  }
+  return '<div class="adstatus">'+t+'</div>';
+}
 function unlockHint(hid){
   if(S.hintUnlocked[hid]) return;
   S.hintUnlocked[hid]=true;
@@ -768,7 +839,7 @@ function doSearch(qstr, historyMode){
 
   const m=document.getElementById("main");
   if(hits.length===0){
-    m.innerHTML=noResult(raw,nq);
+    m.innerHTML=noResult(raw,nq)+adSlotHtml();
   }else{
     let html='<div class="serp-meta">「'+esc(raw)+'」の検索結果 '+hits.length+'件 ('+(Math.random()*0.4+0.08).toFixed(2)+'秒)</div>';
     hits.forEach(p=>{
@@ -777,7 +848,7 @@ function doSearch(qstr, historyMode){
         '<div class="u">'+esc(p.url)+'</div>'+
         '<div class="s">'+p.snippet+'</div></div>';
     });
-    m.innerHTML=html;
+    m.innerHTML=html+adSlotHtml();
   }
   window.scrollTo(0,0);
   return false;
@@ -1755,6 +1826,7 @@ url:"saguri://thank-you",
 keys:["ありがとう","感謝","アリガトウ"],
 req:s=>!!S.ending,
 snippet:"——",
+after:()=>requestAppReview(),
 body:s=>{
   const nm=S.playerName?esc(S.playerName):"あなた";
   const order=Object.values(PAGES).filter(p=>p.num).sort((a,b)=>a.num-b.num);

@@ -38,7 +38,11 @@ final class LevelPlayAdsController {
                 return
             }
             print("[AdBanner] init success")
-            DispatchQueue.main.async { self?.isInitialized = true }
+            DispatchQueue.main.async {
+                self?.isInitialized = true
+                RewardedHintController.shared.preload()
+                NotificationCenter.default.post(name: .levelPlayDidInitialize, object: nil)
+            }
         }
         #endif
     }

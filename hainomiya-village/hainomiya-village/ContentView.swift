@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WebKit
+import StoreKit
 
 struct ContentView: View {
     var body: some View {
@@ -31,12 +32,13 @@ struct WebView: UIViewControllerRepresentable {
 }
 
 /// Hosts the game's WKWebView and bridges the in-page "ヒント" unlock buttons: the
-/// page posts a hint id via `hintReward`, and we call back into `unlockHint(id)`
-/// in the page's JS immediately.
+/// page posts a hint id via `hintReward`, and once the rewarded ad has been watched
+/// (subject to the daily limit / cooldown) we call back into `unlockHint(id)` in the page's JS.
 /// Also handles auto-save/restore via `saveState` and `clearSave` message handlers.
 final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
     private var webView: WKWebView!
     private let htmlURL: URL?
+    private var inlineAd: InlineAdSlotController?
     private static let saveKey = "hainomiya_save"
 
     init(htmlURL: URL?) {
@@ -53,6 +55,8 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
         contentController.add(self, name: "hintReward")
         contentController.add(self, name: "saveState")
         contentController.add(self, name: "clearSave")
+        contentController.add(self, name: "requestReview")
+        contentController.add(self, name: "adSlot")
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
         config.mediaTypesRequiringUserActionForPlayback = []
@@ -68,11 +72,33 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
         if let htmlURL {
             webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
         }
+
+        inlineAd = InlineAdSlotController(webView: webView, presenter: self)
+
+        let rewarded = RewardedHintController.shared
+        rewarded.onUnlock = { [weak self] hintID in
+            let safeID = hintID.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "'", with: "\\'")
+            self?.webView.evaluateJavaScript("unlockHint('\(safeID)')")
+        }
+        rewarded.onStatusChange = { [weak self] in self?.pushAdStatus() }
+        rewarded.onFinish = { [weak self] in self?.webView.evaluateJavaScript("resumeAudio()") }
+        // 日付またはインターバルが変わっている可能性があるので、前面に戻るたびに状態を送り直す。
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.pushAdStatus()
+        }
+    }
+
+    /// 広告の残り回数とインターバルをページ側に渡す(ノートの表示用)。制限の判定自体はネイティブ側が行う。
+    private func pushAdStatus() {
+        let status = RewardedHintController.shared.status
+        webView.evaluateJavaScript("setAdStatus(\(status.remaining),\(status.cooldownUntilMs))")
     }
 
     // MARK: - WKNavigationDelegate
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        pushAdStatus()
         if let savedCode = UserDefaults.standard.string(forKey: Self.saveKey), !savedCode.isEmpty {
             let safe = savedCode
                 .replacingOccurrences(of: "\\", with: "\\\\")
@@ -94,6 +120,18 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
         present(alert, animated: true)
     }
 
+    // MARK: - Review
+
+    /// エンディング到達後のレビュー依頼。同じバージョンでは一度だけ依頼する(表示可否は iOS が判断する)。
+    private func requestReviewOncePerVersion() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        let key = "review_requested_version"
+        guard UserDefaults.standard.string(forKey: key) != version,
+              let scene = view.window?.windowScene else { return }
+        UserDefaults.standard.set(version, forKey: key)
+        AppStore.requestReview(in: scene)
+    }
+
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -104,11 +142,23 @@ final class WebViewController: UIViewController, WKScriptMessageHandler, WKNavig
             }
         case "clearSave":
             UserDefaults.standard.removeObject(forKey: Self.saveKey)
+        case "adSlot":
+            // ページ内の広告枠の位置(ドキュメント座標)。visible=false か不正な値なら隠す。
+            guard let dict = message.body as? [String: Any],
+                  dict["visible"] as? Bool == true,
+                  let x = (dict["x"] as? NSNumber)?.doubleValue,
+                  let y = (dict["y"] as? NSNumber)?.doubleValue,
+                  let w = (dict["w"] as? NSNumber)?.doubleValue,
+                  let h = (dict["h"] as? NSNumber)?.doubleValue else {
+                inlineAd?.update(slot: nil)
+                return
+            }
+            inlineAd?.update(slot: CGRect(x: x, y: y, width: w, height: h))
+        case "requestReview":
+            requestReviewOncePerVersion()
         case "hintReward":
             guard let hintID = message.body as? String else { return }
-            let safeID = hintID.replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "'", with: "\\'")
-            webView.evaluateJavaScript("unlockHint('\(safeID)')")
+            RewardedHintController.shared.requestHint(hintID, from: self)
         default:
             break
         }

@@ -1,5 +1,5 @@
 {
-  "originHash" : "e116cc84e9e308c5fec852e2379253470d30ad209bf0dd9df1a442e8a2fa84c5",
+  "originHash" : "142602719ba165f0b07f7d2b5b1d4c02421800be8d7cbe81853bf7aa8b73a112",
   "pins" : [
     {
       "identity" : "levelplay-swift-package",
@@ -11,12 +11,30 @@
       }
     },
     {
+      "identity" : "levelplay-unityads-adapter-swift-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ironsource-mobile/LevelPlay-UnityAds-Adapter-Swift-Package",
+      "state" : {
+        "revision" : "db9bc9af75e8eb39c3566642df349198cbaf9716",
+        "version" : "5.13.0"
+      }
+    },
+    {
       "identity" : "unity-ad-quality-swift-package",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ironsource-mobile/Unity-Ad-Quality-Swift-Package",
       "state" : {
         "revision" : "7b67cefa586b09e95df54413b48e907c6649e4ca",
         "version" : "9.9.0"
+      }
+    },
+    {
+      "identity" : "unity-ads-swift-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Unity-Technologies/Unity-Ads-Swift-Package",
+      "state" : {
+        "revision" : "09bdf0e27186667f381196f57ceece714c8917a2",
+        "version" : "4.21.0"
       }
     }
   ],
