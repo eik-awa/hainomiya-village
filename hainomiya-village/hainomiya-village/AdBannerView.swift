@@ -6,16 +6,16 @@
 //
 
 import SwiftUI
-import Combine
 import IronSource
 
 /// LevelPlay SDK の初期化状態をアプリ全体で共有する。
 /// バナー広告オブジェクトは初期化完了(onInitSuccess)後に生成する必要があるため、
 /// AdBannerView はこの状態を監視してから広告を生成する。
-final class LevelPlayAdsController: ObservableObject {
+@Observable
+final class LevelPlayAdsController {
     static let shared = LevelPlayAdsController()
 
-    @Published private(set) var isInitialized = false
+    private(set) var isInitialized = false
 
     private init() {}
 
@@ -130,7 +130,7 @@ private struct DebugAdPlaceholder: View {
 /// デバッグ端末(DebugDeviceConfig.isDebugDevice)では本番広告を配信せずプレースホルダーを表示する。
 struct AdBannerView: View {
     let adUnitID: String
-    @ObservedObject private var ads = LevelPlayAdsController.shared
+    @State private var ads = LevelPlayAdsController.shared
 
     var body: some View {
         #if targetEnvironment(simulator)
